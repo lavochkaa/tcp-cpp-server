@@ -2,9 +2,7 @@
 
 Simple TCP server written in C++ using low-level Linux sockets.
 
-## 📸 Screenshot
-
-![Screenshot](screenshot.png)
+![Screenshot](Screenshot.png)
 
 ## 🚀 Features
 
