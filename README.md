@@ -2,6 +2,9 @@ TCP Server (C++)
 
 Simple TCP server written in C++ using low-level Linux sockets.
 
+## 📸 Screenshot
+
+![Screenshot](screenshot.png)
 
 ## 🚀 Features
 
