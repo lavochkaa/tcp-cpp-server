@@ -26,11 +26,8 @@ std::string recv_line(int client_fd)
     return message;
 }
 
-bool authorizate(int client_fd)
+bool authorize(int client_fd, std::string username)
 {
-    const std::string correct_login = "admin";
-    const std::string correct_password = "admin";
-
     send(client_fd, "Login: ", 7, 0);
     std::string login = recv_line(client_fd);
     if (login.empty())
@@ -41,9 +38,15 @@ bool authorizate(int client_fd)
     if (password.empty())
         return false;
 
-    if (login == correct_login && password == correct_password)
+    if ((login == "admin" && password == "admin") ||
+        (login == "user" && password == "qwerty") ||
+        (login == "test" && password == "123"))
     {
+        std::cout << "client authorized: " << login << "\n";
         send(client_fd, "Authorization successful!\n", 26, 0);
+
+        username = login;
+
         return true;
     }
     else
@@ -61,7 +64,9 @@ void handle_client(int client_fd, sockaddr_in client_addr)
     std::cout << "Client connected: " << client_ip << ":" << ntohs(client_addr.sin_port) << "\n";
     std::cout << "-------------------\n";
 
-    if (!authorizate(client_fd))
+    std::string username;
+
+    if (!authorize(client_fd, username))
     {
         std::cout << "Auth faild: " << client_ip << ":" << ntohs(client_addr.sin_port) << "!\n";
         close(client_fd);
@@ -69,9 +74,7 @@ void handle_client(int client_fd, sockaddr_in client_addr)
     }
 
     std::string welcome_msg = "Welcome, ";
-    welcome_msg += client_ip;
-    welcome_msg += ":";
-    welcome_msg += std::to_string(ntohs(client_addr.sin_port));
+    welcome_msg += username;
     welcome_msg += "!\n";
     send(client_fd, welcome_msg.c_str(), welcome_msg.size(), 0);
 
@@ -158,7 +161,7 @@ void handle_client(int client_fd, sockaddr_in client_addr)
                 send(client_fd, response.c_str(), response.size(), 0);
             }
         }
-        
+
         else
         {
             std::cout << "Client disconnected: " << client_ip << ":" << ntohs(client_addr.sin_port) << "\n";
