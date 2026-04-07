@@ -7,6 +7,52 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+std::string recv_line(int client_fd)
+{
+    char buffer[1024] = {0};
+    int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+
+    if (bytes_received <= 0)
+        return "";
+
+    buffer[bytes_received] = '\0';
+    std::string message = buffer;
+
+    while (!message.empty() && (message.back() == '\n' || message.back() == '\r'))
+    {
+        message.pop_back();
+    }
+
+    return message;
+}
+
+bool authorizate(int client_fd)
+{
+    const std::string correct_login = "admin";
+    const std::string correct_password = "admin";
+
+    send(client_fd, "Login: ", 7, 0);
+    std::string login = recv_line(client_fd);
+    if (login.empty())
+        return false;
+
+    send(client_fd, "Password: ", 10, 0);
+    std::string password = recv_line(client_fd);
+    if (password.empty())
+        return false;
+
+    if (login == correct_login && password == correct_password)
+    {
+        send(client_fd, "Authorization successful!\n", 26, 0);
+        return true;
+    }
+    else
+    {
+        send(client_fd, "Authorization failed!\n", 22, 0);
+        return false;
+    }
+}
+
 void handle_client(int client_fd, sockaddr_in client_addr)
 {
     char client_ip[INET_ADDRSTRLEN];
@@ -14,6 +60,13 @@ void handle_client(int client_fd, sockaddr_in client_addr)
 
     std::cout << "Client connected: " << client_ip << ":" << ntohs(client_addr.sin_port) << "\n";
     std::cout << "-------------------\n";
+
+    if (!authorizate(client_fd))
+    {
+        std::cout << "Auth faild: " << client_ip << ":" << ntohs(client_addr.sin_port) << "!\n";
+        close(client_fd);
+        return;
+    }
 
     std::string welcome_msg = "Welcome, ";
     welcome_msg += client_ip;
@@ -49,7 +102,7 @@ void handle_client(int client_fd, sockaddr_in client_addr)
                 message.pop_back();
             }
 
-            std::cout << "Client " << std::to_string(ntohs(client_addr.sin_port)) << "choice: " << message << "\n";
+            std::cout << "Client " << std::to_string(ntohs(client_addr.sin_port)) << " choice: " << message << "\n";
 
             std::string response;
 
@@ -62,11 +115,13 @@ void handle_client(int client_fd, sockaddr_in client_addr)
                 response += "\n";
                 send(client_fd, response.c_str(), response.size(), 0);
             }
+
             else if (message == "2")
             {
                 response = "\nHello from the server!\n";
                 send(client_fd, response.c_str(), response.size(), 0);
             }
+
             else if (message == "3")
             {
                 std::string ask = "Enter your message: ";
@@ -84,22 +139,26 @@ void handle_client(int client_fd, sockaddr_in client_addr)
                     send(client_fd, response.c_str(), response.size(), 0);
                 }
             }
+
             else if (message == "4")
             {
                 response = "\n<!DOCTYPE html>\n<html>\n<head>\n<title>My Web Server</title>\n</head>\n<body>\n<h1>Hello, World!</h1>\n<p>This is a simple HTML page served by the C++ server.</p>\n</body>\n</html>\n";
                 send(client_fd, response.c_str(), response.size(), 0);
             }
+
             else if (message == "0")
             {
                 std::cout << "Client disconnected: " << client_ip << ":" << ntohs(client_addr.sin_port) << "\n";
                 break;
             }
+
             else
             {
                 response = "\nInvalid choice. Please try again.\n";
                 send(client_fd, response.c_str(), response.size(), 0);
             }
         }
+        
         else
         {
             std::cout << "Client disconnected: " << client_ip << ":" << ntohs(client_addr.sin_port) << "\n";
@@ -109,7 +168,6 @@ void handle_client(int client_fd, sockaddr_in client_addr)
 
     close(client_fd);
 }
-
 
 int main()
 {
