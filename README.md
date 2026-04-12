@@ -1,40 +1,97 @@
 ## TCP Server (C++)
 
-Simple TCP server written in C++ using low-level Linux sockets.
+Simple TCP / HTTP server written in C++ using low-level Linux sockets.
 
 ![Screenshot](Screenshot.png)
 
 ## 🚀 Features
 
-• Interactive menu 1-4, 0.
+• Two servers in one program.
 
-• Show client IP and port.
+• HTTP server on port `8080`.
 
-• Shows your message (3).
+• Chat server on port `8081`.
 
-• Send simple HTML response.
+• Chat authorization.
+
+• Chat commands:
+`/help`
+`/ip`
+`/hello`
+`/echo`
+`/html`
+`/send`
+`/exit`
+
+• HTTP login page.
+
+• HTTP menu page after successful login.
+
+• HTTP routes:
+`/`
+`/menu`
+`/hello`
+`/about`
+
+• HTML pages loaded from `src/html_pages/`.
+
+• 404 page for unknown routes.
 
 
-## ⚙️  Requirements
+## ⚙️ Requirements
 
 • Linux / macOS.
 
 • g++ compiler.
 
+• make.
+
+
+## 🔑 Test users
+
+• `admin / admin`
+
+• `user / qwerty`
+
+• `test / 123`
+
 
 ## 💡 Build and Run
 
-```bash
-g++ main.cpp -o server
-```
+Go to `src`:
 
 ```bash
-./server
+cd src
 ```
+
+Build:
 
 ```bash
-Connect to server : nc 127.0.0.1 8080
+make
+```
+
+Run:
+
+```bash
+make run
 ```
 
 
+## 🌐 HTTP
+
+Open in browser:
+
+```text
+http://127.0.0.1:8080/
+```
+
+## 💬 Chat
+
+Connect from terminal:
+
+```bash
+nc 127.0.0.1 8081
+```
+
+Then enter login and password.
 
