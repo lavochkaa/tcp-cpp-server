@@ -1,4 +1,4 @@
-#include "client_manager.hpp"
+#include "chat/client_manager.hpp"
 
 #include <vector>
 #include <mutex>
@@ -44,4 +44,30 @@ bool send_to_user(const std::string& to_username, const std::string& text)
         }
     }
     return false;
+}
+
+bool is_user_online(const std::string& username)
+{
+    std::lock_guard<std::mutex> lock(clients_mutex);
+
+    for (const Client& c : clients)
+    {
+        if (c.username == username)
+            return true;
+    }
+
+    return false;
+}
+
+std::vector<std::string> get_online_usernames()
+{
+    std::lock_guard<std::mutex> lock(clients_mutex);
+    std::vector<std::string> usernames;
+
+    for (const Client& c : clients)
+    {
+        usernames.push_back(c.username);
+    }
+
+    return usernames;
 }

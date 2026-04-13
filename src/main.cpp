@@ -1,18 +1,11 @@
 #include <iostream>
-#include <string>
 #include <thread>
-#include <cstring>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 
-#include "client.hpp"
-#include "client_manager.hpp"
-#include "http_server.hpp"
-#include "authorizate.hpp"
-#include "utils.hpp"
-#include "chat_server.hpp"
+#include "http/http_server.hpp"
+#include "chat/chat_server.hpp"
 
 void run_http_server(int http_fd)
 {

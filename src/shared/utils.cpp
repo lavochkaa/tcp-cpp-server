@@ -1,9 +1,9 @@
-#include "utils.hpp"
+#include "shared/utils.hpp"
 
 #include <sys/socket.h>
 #include <string>
 
-std::string recv_line(int client_fd)
+bool recv_line(int client_fd, std::string& message)
 {
     char buffer[1024] = {0};
 
@@ -13,11 +13,14 @@ std::string recv_line(int client_fd)
                      0);
 
     if (bytes <= 0)
-        return "";
+    {
+        message.clear();
+        return false;
+    }
 
     buffer[bytes] = '\0';
 
-    std::string message = buffer;
+    message = buffer;
 
     while (!message.empty() &&
            (message.back() == '\n' ||
@@ -26,5 +29,5 @@ std::string recv_line(int client_fd)
         message.pop_back();
     }
 
-    return message;
+    return true;
 }

@@ -1,8 +1,8 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -pthread -Wall
+CXXFLAGS = -std=c++17 -pthread -Wall -I.
 
 TARGET = server
-SOURCES = $(wildcard *.cpp)
+SOURCES = $(shell find . -name '*.cpp')
 
 all:
 	$(CXX) $(CXXFLAGS) $(SOURCES) -o $(TARGET)
