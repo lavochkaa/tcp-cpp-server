@@ -1,6 +1,6 @@
 ## TCP Server (C++)
 
-Simple TCP / HTTP server written in C++ using low-level Linux sockets.
+Simple TCP / HTTP messenger server written in C++ using low-level Linux sockets.
 
 ![Screenshot](Screenshot.png)
 
@@ -12,7 +12,7 @@ Simple TCP / HTTP server written in C++ using low-level Linux sockets.
 
 • Chat server on port `8081`.
 
-• Chat authorization.
+• Login only by username.
 
 • Chat commands:
 `/help`
@@ -20,20 +20,32 @@ Simple TCP / HTTP server written in C++ using low-level Linux sockets.
 `/hello`
 `/echo`
 `/html`
-`/send`
+`/chat <username>`
+`/back`
+`/sent_messages`
+`/session_messages`
 `/exit`
 
 • HTTP login page.
 
 • HTTP menu page after successful login.
 
+• HTTP chats page.
+
+• HTTP personal dialog page:
+`/chat/username`
+
 • HTTP routes:
 `/`
 `/menu`
 `/hello`
 `/about`
+`/chat`
+`/logout`
 
-• HTML pages loaded from `src/html_pages/`.
+• Web messages update without full page reload.
+
+• User cannot login twice at the same time.
 
 • 404 page for unknown routes.
 
@@ -45,15 +57,6 @@ Simple TCP / HTTP server written in C++ using low-level Linux sockets.
 • g++ compiler.
 
 • make.
-
-
-## 🔑 Test users
-
-• `admin / admin`
-
-• `user / qwerty`
-
-• `test / 123`
 
 
 ## 💡 Build and Run
@@ -76,6 +79,19 @@ Run:
 make run
 ```
 
+## 📁 Structure
+
+```text
+src/
+├── chat/
+├── http/
+├── shared/
+├── storage/
+└── web/
+    ├── pages/
+    └── assets/
+```
+
 
 ## 🌐 HTTP
 
@@ -83,6 +99,15 @@ Open in browser:
 
 ```text
 http://127.0.0.1:8080/
+```
+
+Main pages:
+
+```text
+/
+/menu
+/chat
+/chat/username
 ```
 
 ## 💬 Chat
@@ -93,5 +118,4 @@ Connect from terminal:
 nc 127.0.0.1 8081
 ```
 
-Then enter login and password.
-
+Then enter only your username.
