@@ -2,7 +2,7 @@
 
 Simple TCP / HTTP messenger server written in C++ using low-level Linux sockets.
 
-![Screenshot](Screenshot.png)
+![Screenshot](Screenshot_new.png)
 
 ## 🚀 Features
 
