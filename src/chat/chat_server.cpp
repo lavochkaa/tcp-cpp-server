@@ -61,6 +61,7 @@ void handle_client(int client_fd, sockaddr_in client_addr)
             help += "/html - Show default HTML 'hello'\n";
             help += "/chat <username> - Open chat with user\n";
             help += "/back - Leave current chat dialog\n";
+            help += "/inspect - Show collected server info\n";
             help += "/sent_messages - Show sent messages\n";
             help += "/session_messages - Show incoming messages\n";
             help += "/help - Show available commands\n";
@@ -113,6 +114,42 @@ void handle_client(int client_fd, sockaddr_in client_addr)
                 std::string ok = "Back to main menu.\n";
                 send(client_fd, ok.c_str(), ok.size(), 0);
             }
+        }
+
+        else if (message == "/inspect")
+        {
+            std::vector<std::string> online_users = get_online_usernames();
+            std::vector<std::string> session_users = get_session_usernames();
+            std::vector<std::string> chat_partners = get_chat_partners_for_user(client.username);
+
+            std::string response = "\nServer inspect:\n";
+            response += "username: " + client.username + "\n";
+            response += "client fd: " + std::to_string(client.fd) + "\n";
+            response += "client ip: " + std::string(client_ip) + "\n";
+            response += "client port: " + std::to_string(ntohs(client_addr.sin_port)) + "\n";
+            response += "server port: 8081\n";
+            response += "active chat user: ";
+            response += active_chat_user.empty() ? "(none)\n" : active_chat_user + "\n";
+            response += "online terminal users: " + std::to_string(online_users.size()) + "\n";
+
+            for (const std::string& username : online_users)
+                response += "  - " + username + "\n";
+
+            response += "active web sessions: " + std::to_string(session_users.size()) + "\n";
+
+            for (const std::string& username : session_users)
+                response += "  - " + username + "\n";
+
+            response += "incoming messages: " + std::to_string(get_messages_for_user(client.username).size()) + "\n";
+            response += "sent messages: " + std::to_string(get_sent_messages_for_user(client.username).size()) + "\n";
+            response += "chat partners: " + std::to_string(chat_partners.size()) + "\n";
+
+            for (const std::string& username : chat_partners)
+                response += "  - " + username + "\n";
+
+            response += "total stored messages: " + std::to_string(get_total_messages_count()) + "\n";
+
+            send(client_fd, response.c_str(), response.size(), 0);
         }
 
         else if (message.rfind("/chat ", 0) == 0)

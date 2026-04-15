@@ -4,11 +4,14 @@
 #include "storage/message_store.hpp"
 #include "storage/session_store.hpp"
 
+#include <arpa/inet.h>
 #include <fstream>
+#include <netinet/in.h>
 #include <sstream>
 #include <string>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <utility>
 #include <vector>
 
 namespace
@@ -144,6 +147,19 @@ namespace
         return make_page_shell("Login", body, "login-page");
     }
 
+    std::string join_user_list_html(const std::vector<std::string>& users)
+    {
+        if (users.empty())
+            return "<li class=\"muted\">none</li>";
+
+        std::string html;
+
+        for (const std::string& username : users)
+            html += "<li>" + escape_html(username) + "</li>";
+
+        return html;
+    }
+
     std::string make_html_response(const std::string& body)
     {
         return make_response("HTTP/1.1 200 OK", "text/html; charset=utf-8", body);
@@ -261,6 +277,15 @@ namespace
         return request_line.substr(first_space + 1, second_space - first_space - 1);
     }
 
+    std::string get_method(const std::string& request_line)
+    {
+        size_t space = request_line.find(' ');
+        if (space == std::string::npos)
+            return request_line;
+
+        return request_line.substr(0, space);
+    }
+
     std::string get_form_value(const std::string& body, const std::string& key)
     {
         std::string prefix = key + "=";
@@ -276,6 +301,134 @@ namespace
             end = body.size();
 
         return body.substr(start, end - start);
+    }
+
+    std::vector<std::pair<std::string, std::string>> get_headers(const std::string& request)
+    {
+        std::vector<std::pair<std::string, std::string>> headers;
+
+        size_t line_start = request.find("\r\n");
+        if (line_start == std::string::npos)
+            return headers;
+
+        line_start += 2;
+
+        while (line_start < request.size())
+        {
+            size_t line_end = request.find("\r\n", line_start);
+            if (line_end == std::string::npos || line_end == line_start)
+                break;
+
+            std::string line = request.substr(line_start, line_end - line_start);
+            size_t colon = line.find(':');
+
+            if (colon != std::string::npos)
+            {
+                std::string key = line.substr(0, colon);
+                std::string value = line.substr(colon + 1);
+
+                while (!value.empty() && value.front() == ' ')
+                    value.erase(value.begin());
+
+                headers.push_back({key, value});
+            }
+
+            line_start = line_end + 2;
+        }
+
+        return headers;
+    }
+
+    std::string make_http_inspect_page(int client_fd,
+                                       const std::string& request,
+                                       const std::string& request_line,
+                                       const std::string& path,
+                                       const std::string& current_user)
+    {
+        sockaddr_in peer_addr{};
+        sockaddr_in local_addr{};
+        socklen_t peer_len = sizeof(peer_addr);
+        socklen_t local_len = sizeof(local_addr);
+        char peer_ip[INET_ADDRSTRLEN] = "unknown";
+        char local_ip[INET_ADDRSTRLEN] = "unknown";
+
+        if (getpeername(client_fd, reinterpret_cast<sockaddr*>(&peer_addr), &peer_len) == 0)
+            inet_ntop(AF_INET, &peer_addr.sin_addr, peer_ip, INET_ADDRSTRLEN);
+
+        if (getsockname(client_fd, reinterpret_cast<sockaddr*>(&local_addr), &local_len) == 0)
+            inet_ntop(AF_INET, &local_addr.sin_addr, local_ip, INET_ADDRSTRLEN);
+
+        std::vector<std::pair<std::string, std::string>> headers = get_headers(request);
+        std::vector<std::string> online_users = get_online_usernames();
+        std::vector<std::string> session_users = get_session_usernames();
+        std::vector<std::string> chat_partners;
+
+        if (!current_user.empty())
+            chat_partners = get_chat_partners_for_user(current_user);
+
+        std::string body;
+        body += "<main class=\"shell simple-page\">";
+        body += "<section class=\"page-head\"><h1>Server inspect</h1>";
+        body += "<p class=\"lead\">Collected request, socket, session and chat state.</p></section>";
+
+        body += "<section class=\"card\"><h2>Request line</h2>";
+        body += "<p><b>method:</b> " + escape_html(get_method(request_line)) + "</p>";
+        body += "<p><b>path:</b> " + escape_html(path) + "</p>";
+        body += "<p><b>raw:</b> <code>" + escape_html(request_line) + "</code></p>";
+        body += "</section>";
+
+        body += "<section class=\"card\"><h2>Socket info</h2>";
+        body += "<p><b>peer ip:</b> " + escape_html(peer_ip) + "</p>";
+        body += "<p><b>peer port:</b> " + std::to_string(ntohs(peer_addr.sin_port)) + "</p>";
+        body += "<p><b>local ip:</b> " + escape_html(local_ip) + "</p>";
+        body += "<p><b>local port:</b> " + std::to_string(ntohs(local_addr.sin_port)) + "</p>";
+        body += "<p><b>current user:</b> " + escape_html(current_user.empty() ? "(guest)" : current_user) + "</p>";
+        body += "<p><b>session cookie:</b> " + escape_html(get_cookie_value(request, "session_id")) + "</p>";
+        body += "</section>";
+
+        body += "<section class=\"card\"><h2>Headers</h2><ul>";
+        if (headers.empty())
+        {
+            body += "<li class=\"muted\">No headers parsed.</li>";
+        }
+        else
+        {
+            for (const auto& header : headers)
+                body += "<li><b>" + escape_html(header.first) + ":</b> " + escape_html(header.second) + "</li>";
+        }
+        body += "</ul></section>";
+
+        body += "<section class=\"card\"><h2>Body</h2>";
+        std::string raw_body = get_body(request);
+        if (raw_body.empty())
+            body += "<p class=\"muted\">Request body is empty.</p>";
+        else
+            body += "<pre>" + escape_html(raw_body) + "</pre>";
+        body += "</section>";
+
+        body += "<section class=\"card\"><h2>Server state</h2>";
+        body += "<p><b>online terminal users:</b> " + std::to_string(online_users.size()) + "</p><ul>";
+        body += join_user_list_html(online_users);
+        body += "</ul>";
+        body += "<p><b>active web sessions:</b> " + std::to_string(session_users.size()) + "</p><ul>";
+        body += join_user_list_html(session_users);
+        body += "</ul>";
+        body += "<p><b>total stored messages:</b> " + std::to_string(get_total_messages_count()) + "</p>";
+        if (!current_user.empty())
+        {
+            body += "<p><b>your incoming messages:</b> " + std::to_string(get_messages_for_user(current_user).size()) + "</p>";
+            body += "<p><b>your sent messages:</b> " + std::to_string(get_sent_messages_for_user(current_user).size()) + "</p>";
+            body += "<p><b>your chat partners:</b> " + std::to_string(chat_partners.size()) + "</p><ul>";
+            body += join_user_list_html(chat_partners);
+            body += "</ul>";
+        }
+        body += "</section>";
+
+        body += "<section class=\"card\"><h2>Raw request</h2><pre>" + escape_html(request) + "</pre></section>";
+        body += "<a class=\"text-link\" href=\"/menu\">Back to menu</a>";
+        body += "</main>";
+
+        return make_page_shell("Server inspect", body, "inspect-page");
     }
 
     std::string make_chat_list_page(const std::string& current_user, const std::string& message = "")
@@ -461,6 +614,12 @@ void handle_http_client(int client_fd)
     else if (path == "/about")
     {
         response = load_html_page_response("web/pages/about.html");
+    }
+    else if (path == "/inspect")
+    {
+        response = make_html_response(
+            make_http_inspect_page(client_fd, request, request_line, path, get_current_http_user(request))
+        );
     }
     else if (path == "/menu")
     {

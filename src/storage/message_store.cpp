@@ -83,3 +83,9 @@ std::vector<std::string> get_chat_partners_for_user(const std::string& username)
 
     return std::vector<std::string>(partners.begin(), partners.end());
 }
+
+size_t get_total_messages_count()
+{
+    std::lock_guard<std::mutex> lock(messages_mutex);
+    return messages.size();
+}

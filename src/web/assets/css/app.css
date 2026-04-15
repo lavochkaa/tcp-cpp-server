@@ -132,6 +132,38 @@ a:hover {
     color: #5f6775;
 }
 
+.simple-page pre,
+.simple-page code,
+.simple-page li,
+.simple-page p,
+.simple-page h1,
+.simple-page h2 {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.simple-page pre {
+    margin: 0;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #f4f7fb;
+    border: 1px solid #dce3ec;
+    white-space: pre-wrap;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.simple-page code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.95em;
+}
+
+.simple-page ul {
+    margin: 0;
+    padding-left: 22px;
+}
+
 .chat-page {
     padding-bottom: 32px;
 }
