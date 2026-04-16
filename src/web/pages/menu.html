@@ -6,15 +6,53 @@
         <title>Menu</title>
         <link rel="stylesheet" href="/assets/css/app.css">
     </head>
-    <body>
-        <main class="shell simple-page">
+    <body class="menu-page">
+        <main class="shell simple-page page-stack">
+            <section class="hero">
+                <div class="hero-split">
+                    <div>
+                        <span class="hero-eyebrow">Main menu</span>
+                        <h1>Choose the next part of your messenger.</h1>
+                        <p>The main actions should live here. Open chats or inspect the server state first, then use the smaller pages only when you need them.</p>
+                        <div class="pill-nav">
+                            <a href="/logout">Logout</a>
+                        </div>
+                    </div>
+
+                    <div class="hero-actions">
+                        <a class="hero-action" href="/chat">
+                            <span class="hero-action-title">Chats</span>
+                            <span class="hero-action-copy">Open live dialogs and jump straight into conversation.</span>
+                        </a>
+
+                        <a class="hero-action" href="/inspect">
+                            <span class="hero-action-title">Inspect</span>
+                            <span class="hero-action-copy">See routes, headers, sessions, sockets and message state.</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
             <section class="card">
-                <h1>Menu</h1>
-                <p class="lead">Choose where you want to go next.</p>
-                <a class="user-link" href="/hello">Hello page</a>
-                <a class="user-link" href="/about">About page</a>
-                <a class="user-link" href="/chat">Open chats</a>
-                <a class="user-link" href="/inspect">Server inspect</a>
+                <div class="section-top">
+                    <div>
+                        <span class="eyebrow-tag">Secondary pages</span>
+                        <h2>Hello and About</h2>
+                    </div>
+                </div>
+
+                <div class="action-grid compact">
+                    <a class="action-tile" href="/hello">
+                        <span class="action-title">Hello</span>
+                        <span class="action-copy">Small demo page with almost no extra content.</span>
+                    </a>
+
+                    <a class="action-tile" href="/about">
+                        <span class="action-title">About</span>
+                        <span class="action-copy">Short note about the project and nothing overloaded.</span>
+                    </a>
+                </div>
+
                 <a class="text-link" href="/logout">Back to login</a>
             </section>
         </main>

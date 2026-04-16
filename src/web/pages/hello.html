@@ -6,12 +6,21 @@
         <title>Hello</title>
         <link rel="stylesheet" href="/assets/css/app.css">
     </head>
-    <body>
-        <main class="shell simple-page">
+    <body class="hello-page">
+        <main class="shell simple-page page-stack">
+            <section class="hero">
+                <span class="hero-eyebrow">Hello route</span>
+                <h1>Hello.</h1>
+                <p>This is the simplest page in the app.</p>
+                <div class="pill-nav">
+                    <a href="/menu">Menu</a>
+                </div>
+            </section>
+
             <section class="card">
-                <h1>Hello page</h1>
-                <p>This is /hello.</p>
-                <a class="text-link" href="/menu">Back</a>
+                <span class="eyebrow-tag">Minimal</span>
+                <h2>Nothing extra here</h2>
+                <a class="text-link" href="/menu">Back to menu</a>
             </section>
         </main>
     </body>

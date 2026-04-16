@@ -6,11 +6,22 @@
         <title>404</title>
         <link rel="stylesheet" href="/assets/css/app.css">
     </head>
-    <body>
-        <main class="shell simple-page">
+    <body class="error-page">
+        <main class="shell simple-page page-stack">
+            <section class="hero">
+                <span class="hero-eyebrow">404</span>
+                <h1>This route fell off the map.</h1>
+                <p>The page you requested does not exist, but the rest of the messenger is still waiting for you.</p>
+                <div class="pill-nav">
+                    <a href="/">Login</a>
+                    <a href="/menu">Menu</a>
+                </div>
+            </section>
+
             <section class="card">
-                <h1>404 Not Found</h1>
-                <p>The page you requested does not exist.</p>
+                <span class="eyebrow-tag">Recovery</span>
+                <h2>Get back on track</h2>
+                <p class="card-copy">Head back to login to start a new session, or return to the menu if you are already inside the app.</p>
                 <a class="text-link" href="/">Back to login</a>
             </section>
         </main>

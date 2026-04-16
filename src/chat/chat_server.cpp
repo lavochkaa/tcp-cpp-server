@@ -62,6 +62,7 @@ void handle_client(int client_fd, sockaddr_in client_addr)
             help += "/chat <username> - Open chat with user\n";
             help += "/back - Leave current chat dialog\n";
             help += "/inspect - Show collected server info\n";
+            help += "/who - Show all loggined users\n";
             help += "/sent_messages - Show sent messages\n";
             help += "/session_messages - Show incoming messages\n";
             help += "/help - Show available commands\n";
@@ -152,6 +153,35 @@ void handle_client(int client_fd, sockaddr_in client_addr)
             send(client_fd, response.c_str(), response.size(), 0);
         }
 
+        else if (message == "/who")
+        {
+            std::vector<std::string> online_users = get_online_usernames();
+            std::vector<std::string> session_users = get_session_usernames();
+
+            size_t total_users = online_users.size() + session_users.size();
+
+            std::string response = "\nOnline users now:\n";
+            response += "total: " +std::to_string(total_users) + "\n";
+
+            if (total_users == 0)
+            {
+                response += "Nobody is online.\n";
+            }
+            else
+            {
+                for (const std::string& username : online_users)
+                {
+                    response += " -" + username + " (tcp)\n";
+                }
+
+                for (const std::string& username : session_users)
+                {
+                    response += " -" + username + " (web)\n";
+                }
+            }
+            send(client_fd, response.c_str(), response.size(), 0);
+        }
+        
         else if (message.rfind("/chat ", 0) == 0)
         {
             std::string to_user = message.substr(6);
