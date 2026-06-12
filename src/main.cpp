@@ -6,8 +6,9 @@
 
 #include "http/http_server.hpp"
 #include "chat/chat_server.hpp"
+#include "server/thread_pool.hpp"
 
-void run_http_server(int http_fd)
+void run_http_server(int http_fd, ThreadPool& pool)
 {
     while (true)
     {
@@ -21,12 +22,13 @@ void run_http_server(int http_fd)
             continue;
         }
 
-        std::thread client_thread(handle_http_client, client_fd);
-        client_thread.detach();
+        pool.submit([client_fd] {
+            handle_http_client(client_fd);
+        });
     }
 }
 
-void run_chat_server(int chat_fd)
+void run_chat_server(int chat_fd, ThreadPool& pool)
 {
     while (true)
     {
@@ -40,8 +42,9 @@ void run_chat_server(int chat_fd)
             continue;
         }
 
-        std::thread client_thread(handle_client, client_fd, client_addr);
-        client_thread.detach();
+        pool.submit([client_fd, client_addr] {
+            handle_client(client_fd, client_addr);
+        });
     }
 }
 
@@ -101,8 +104,10 @@ int main()
     std::cout << "Server is listening on port 8080...\n";
     std::cout << "Server is listening on port 8081...\n";
 
-    std::thread http_thread(run_http_server, http_fd);
-    std::thread chat_thread(run_chat_server, chat_fd);
+    ThreadPool pool(8);
+
+    std::thread http_thread(run_http_server, http_fd, std::ref(pool));
+    std::thread chat_thread(run_chat_server, chat_fd, std::ref(pool));
 
     http_thread.join();
     chat_thread.join();

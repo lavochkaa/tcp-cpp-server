@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -pthread -Wall -I.
 
-TARGET = server
+TARGET = ../server
 SOURCES = $(shell find . -name '*.cpp')
 
 all:
