@@ -1,4 +1,4 @@
-server
+/server
 *.o
 .DS_Store
 .omx/
