@@ -1,6 +1,7 @@
 /server
 *.o
 .DS_Store
+.vscode/
 .omx/
 .claude/
 CLAUDE.md

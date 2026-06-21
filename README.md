@@ -52,32 +52,37 @@ Simple TCP / HTTP messenger server written in C++ using low-level Linux sockets.
 
 ## ⚙️ Requirements
 
-• Linux / macOS.
+• Docker (recommended).
 
-• g++ compiler.
-
-• make.
+• Or: Linux, g++, make.
 
 
 ## 💡 Build and Run
 
-Go to `src`:
-
-```bash
-cd src
-```
+### Docker (recommended)
 
 Build:
 
 ```bash
-make
+docker build -t chat-server .
 ```
 
 Run:
 
 ```bash
-make run
+docker run -p 8080:8080 -p 8081:8081 chat-server
 ```
+
+### Manual (Linux only)
+
+```bash
+cd src && make && ../server
+```
+
+## 🏗️ Architecture
+
+- Chat server uses **epoll** event loop — single thread monitors all connections, new clients are dispatched to a **ThreadPool**.
+- HTTP server uses a simple accept loop with ThreadPool.
 
 ## 📁 Structure
 

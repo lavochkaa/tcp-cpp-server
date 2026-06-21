@@ -6,6 +6,7 @@
 
 #include "http/http_server.hpp"
 #include "chat/chat_server.hpp"
+#include "server/event_loop.hpp"
 #include "server/thread_pool.hpp"
 
 void run_http_server(int http_fd, ThreadPool& pool)
@@ -24,26 +25,6 @@ void run_http_server(int http_fd, ThreadPool& pool)
 
         pool.submit([client_fd] {
             handle_http_client(client_fd);
-        });
-    }
-}
-
-void run_chat_server(int chat_fd, ThreadPool& pool)
-{
-    while (true)
-    {
-        sockaddr_in client_addr{};
-        socklen_t client_size = sizeof(client_addr);
-
-        int client_fd = accept(chat_fd, (sockaddr*)&client_addr, &client_size);
-        if (client_fd == -1)
-        {
-            std::cerr << "accept chat error\n";
-            continue;
-        }
-
-        pool.submit([client_fd, client_addr] {
-            handle_client(client_fd, client_addr);
         });
     }
 }
@@ -107,7 +88,13 @@ int main()
     ThreadPool pool(8);
 
     std::thread http_thread(run_http_server, http_fd, std::ref(pool));
-    std::thread chat_thread(run_chat_server, chat_fd, std::ref(pool));
+    EventLoop chat_loop(chat_fd, [&pool](int client_fd) {
+        pool.submit([client_fd] {
+            std::cerr << "New client fd=" << client_fd << "\n";
+            handle_client(client_fd, sockaddr_in{});
+        });
+    });
+    std::thread chat_thread([&chat_loop] { chat_loop.run(); });
 
     http_thread.join();
     chat_thread.join();
