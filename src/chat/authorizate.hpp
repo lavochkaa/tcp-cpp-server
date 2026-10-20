@@ -2,4 +2,6 @@
 
 #include <string>
 
-bool authorize(int client_fd, std::string& username);
+class LineReader;
+
+bool authorize(int client_fd, std::string& username, LineReader& reader);

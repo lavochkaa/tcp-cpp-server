@@ -23,7 +23,8 @@ void handle_client(int client_fd, sockaddr_in client_addr)
               << client_ip << ":" << ntohs(client_addr.sin_port) << "\n";
 
     std::string username;
-    if (!authorize(client_fd, username))
+    LineReader reader(client_fd);
+    if (!authorize(client_fd, username, reader))
     {
         close(client_fd);
         return;
@@ -46,7 +47,7 @@ void handle_client(int client_fd, sockaddr_in client_addr)
     while (true)
     {
         std::string message;
-        if (!recv_line(client_fd, message))
+        if (!reader.read_line(message))
             break;
         if (message.empty())
             continue;

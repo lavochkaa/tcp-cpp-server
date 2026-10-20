@@ -81,7 +81,7 @@ cd src && make && ../server
 
 ## Test
 
-Run the HTTP parser regression tests on Linux or macOS with a C++17 compiler:
+Run the HTTP parser, HTTP I/O, and TCP chat line tests on Linux or macOS with a C++17 compiler:
 
 ```bash
 sh tests/run.sh

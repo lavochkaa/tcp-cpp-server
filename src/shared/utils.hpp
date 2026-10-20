@@ -2,4 +2,13 @@
 
 #include <string>
 
-bool recv_line(int client_fd, std::string& message);
+class LineReader
+{
+public:
+    explicit LineReader(int client_fd);
+    bool read_line(std::string& message);
+
+private:
+    int client_fd_;
+    std::string pending_;
+};

@@ -8,11 +8,11 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-bool authorize(int client_fd, std::string& username)
+bool authorize(int client_fd, std::string& username, LineReader& reader)
 {
     send(client_fd, "Login: ", 7, 0);
     std::string login;
-    if (!recv_line(client_fd, login) || login.empty())
+    if (!reader.read_line(login) || login.empty())
         return false;
 
     if (is_user_online(login) || is_session_active(login))
