@@ -2,13 +2,13 @@
 #include "http/http_parser.hpp"
 #include "http/http_builder.hpp"
 #include "http/html_pages.hpp"
+#include "http/http_io.hpp"
 
 #include "chat/client_manager.hpp"
 #include "storage/message_store.hpp"
 #include "storage/session_store.hpp"
 
 #include <string>
-#include <sys/socket.h>
 #include <unistd.h>
 
 namespace
@@ -30,16 +30,19 @@ namespace
 
 void handle_http_client(int client_fd)
 {
-    char buffer[4096] = {0};
-
-    int bytes = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-    if (bytes <= 0)
+    std::string request;
+    const HttpReadStatus read_status = read_http_request(client_fd, request);
+    if (read_status != HttpReadStatus::ok)
     {
+        if (read_status == HttpReadStatus::bad_request)
+            send_http_response(client_fd, make_response("HTTP/1.1 400 Bad Request",
+                                                     "text/plain", "Bad Request"));
+        else if (read_status == HttpReadStatus::too_large)
+            send_http_response(client_fd, make_response("HTTP/1.1 413 Payload Too Large",
+                                                     "text/plain", "Payload Too Large"));
         close(client_fd);
         return;
     }
-
-    std::string request(buffer, bytes);
     std::string request_line = get_request_line(request);
     std::string path = get_path(request_line);
     std::string method = get_method(request_line);
@@ -203,6 +206,6 @@ void handle_http_client(int client_fd)
         response = load_404_response();
     }
 
-    send(client_fd, response.c_str(), response.size(), 0);
+    send_http_response(client_fd, response);
     close(client_fd);
 }

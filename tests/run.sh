@@ -9,3 +9,8 @@ trap 'rm -rf "$build_dir"' EXIT HUP INT TERM
     "$project_root/src/http/http_parser.cpp" "$project_root/tests/http_parser_test.cpp" \
     -o "$build_dir/http_parser_test"
 "$build_dir/http_parser_test"
+
+"${CXX:-g++}" -std=c++17 -Wall -Wextra -Werror -pthread -I"$project_root/src" \
+    "$project_root/src/http/http_io.cpp" "$project_root/tests/http_io_test.cpp" \
+    -o "$build_dir/http_io_test"
+"$build_dir/http_io_test"
