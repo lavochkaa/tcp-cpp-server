@@ -3,6 +3,51 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <cctype>
+
+namespace
+{
+    bool ascii_iequals(const std::string& left, const std::string& right)
+    {
+        if (left.size() != right.size())
+            return false;
+
+        for (size_t i = 0; i < left.size(); ++i)
+        {
+            if (std::tolower(static_cast<unsigned char>(left[i])) !=
+                std::tolower(static_cast<unsigned char>(right[i])))
+                return false;
+        }
+        return true;
+    }
+
+    std::string get_delimited_value(const std::string& fields, const std::string& key,
+                                    char separator, bool skip_spaces)
+    {
+        size_t start = 0;
+        while (start < fields.size())
+        {
+            size_t end = fields.find(separator, start);
+            if (end == std::string::npos)
+                end = fields.size();
+
+            size_t name_start = start;
+            if (skip_spaces)
+            {
+                while (name_start < end && fields[name_start] == ' ')
+                    ++name_start;
+            }
+
+            size_t equals = fields.find('=', name_start);
+            if (equals != std::string::npos && equals < end &&
+                fields.compare(name_start, equals - name_start, key) == 0)
+                return fields.substr(equals + 1, end - equals - 1);
+
+            start = end + 1;
+        }
+        return "";
+    }
+}
 
 std::string get_request_line(const std::string& request)
 {
@@ -46,45 +91,21 @@ std::string get_body(const std::string& request)
 
 std::string get_cookie_value(const std::string& request, const std::string& key)
 {
-    const std::string cookie_line = "Cookie: ";
-    size_t start = request.find(cookie_line);
-
-    if (start == std::string::npos)
-        return "";
-
-    size_t end = request.find("\r\n", start);
-    std::string cookies = request.substr(start + cookie_line.size(), end - start - cookie_line.size());
-
-    std::string prefix = key + "=";
-    size_t value_start = cookies.find(prefix);
-
-    if (value_start == std::string::npos)
-        return "";
-
-    value_start += prefix.size();
-
-    size_t value_end = cookies.find(";", value_start);
-    if (value_end == std::string::npos)
-        value_end = cookies.size();
-
-    return cookies.substr(value_start, value_end - value_start);
+    for (const auto& header : get_headers(request))
+    {
+        if (ascii_iequals(header.first, "Cookie"))
+        {
+            std::string value = get_delimited_value(header.second, key, ';', true);
+            if (!value.empty())
+                return value;
+        }
+    }
+    return "";
 }
 
 std::string get_form_value(const std::string& body, const std::string& key)
 {
-    std::string prefix = key + "=";
-    size_t start = body.find(prefix);
-
-    if (start == std::string::npos)
-        return "";
-
-    start += prefix.size();
-
-    size_t end = body.find('&', start);
-    if (end == std::string::npos)
-        end = body.size();
-
-    return body.substr(start, end - start);
+    return get_delimited_value(body, key, '&', false);
 }
 
 std::vector<std::pair<std::string, std::string>> get_headers(const std::string& request)

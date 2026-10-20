@@ -79,6 +79,14 @@ docker run -p 8080:8080 -p 8081:8081 chat-server
 cd src && make && ../server
 ```
 
+## Test
+
+Run the HTTP parser regression tests on Linux or macOS with a C++17 compiler:
+
+```bash
+sh tests/run.sh
+```
+
 ## 🏗️ Architecture
 
 - Chat server uses **epoll** event loop — single thread monitors all connections, new clients are dispatched to a **ThreadPool**.
