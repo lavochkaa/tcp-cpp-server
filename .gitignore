@@ -4,5 +4,6 @@
 .vscode/
 .omx/
 .claude/
+.agent/
 CLAUDE.md
 AGENTS.md
