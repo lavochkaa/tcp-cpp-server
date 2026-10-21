@@ -19,3 +19,8 @@ trap 'rm -rf "$build_dir"' EXIT HUP INT TERM
     "$project_root/src/shared/utils.cpp" "$project_root/tests/chat_line_reader_test.cpp" \
     -o "$build_dir/chat_line_reader_test"
 "$build_dir/chat_line_reader_test"
+
+"${CXX:-g++}" -std=c++17 -Wall -Wextra -Werror -pthread -I"$project_root/src" \
+    "$project_root/src/chat/client_manager.cpp" "$project_root/tests/chat_client_manager_test.cpp" \
+    -o "$build_dir/chat_client_manager_test"
+"$build_dir/chat_client_manager_test"

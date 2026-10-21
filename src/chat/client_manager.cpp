@@ -3,6 +3,7 @@
 #include <vector>
 #include <mutex>
 #include <algorithm>
+#include <cerrno>
 #include <sys/socket.h>
 
 namespace
@@ -39,7 +40,28 @@ bool send_to_user(const std::string& to_username, const std::string& text)
     {
         if (c.username == to_username)
         {
-            send(c.fd, text.c_str(), text.size(), 0);
+#if defined(SO_NOSIGPIPE) && !defined(MSG_NOSIGNAL)
+            const int enabled = 1;
+            if (setsockopt(c.fd, SOL_SOCKET, SO_NOSIGPIPE, &enabled, sizeof(enabled)) != 0)
+                return false;
+#endif
+
+            size_t sent = 0;
+            while (sent < text.size())
+            {
+#ifdef MSG_NOSIGNAL
+                const int flags = MSG_NOSIGNAL;
+#else
+                const int flags = 0;
+#endif
+                const ssize_t count = send(c.fd, text.data() + sent,
+                                           text.size() - sent, flags);
+                if (count < 0 && errno == EINTR)
+                    continue;
+                if (count <= 0)
+                    return false;
+                sent += static_cast<size_t>(count);
+            }
             return true;
         }
     }
