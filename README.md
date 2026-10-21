@@ -132,3 +132,9 @@ nc 127.0.0.1 8081
 ```
 
 Then enter only your username.
+
+## Security scope
+
+This is a demo with username-only login and unencrypted HTTP/TCP. Session IDs are
+random, but they do not verify a user's identity or protect traffic in transit.
+Do not expose the server to untrusted networks.

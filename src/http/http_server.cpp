@@ -81,8 +81,14 @@ void handle_http_client(int client_fd)
         else
         {
             std::string session_id = create_session(login);
-            std::string cookie = "Set-Cookie: session_id=" + session_id;
-            response = make_redirect_response("/menu", cookie);
+            if (session_id.empty())
+                response = make_response("HTTP/1.1 503 Service Unavailable",
+                                         "text/plain", "Session unavailable");
+            else
+            {
+                std::string cookie = "Set-Cookie: session_id=" + session_id;
+                response = make_redirect_response("/menu", cookie);
+            }
         }
     }
     else if (path == "/hello")

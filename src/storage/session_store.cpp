@@ -1,27 +1,82 @@
 #include "storage/session.hpp"
 #include "storage/session_store.hpp"
 
+#include <array>
+#include <cerrno>
+#include <fcntl.h>
 #include <mutex>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 namespace
 {
     std::vector<Session> sessions;
     std::mutex sessions_mutex;
-    int next_session_id = 1;
+
+    std::string generate_session_id()
+    {
+        std::array<unsigned char, 32> bytes{};
+        int fd = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
+        if (fd < 0)
+            return "";
+
+        size_t filled = 0;
+        while (filled < bytes.size())
+        {
+            ssize_t count = read(fd, bytes.data() + filled, bytes.size() - filled);
+            if (count < 0 && errno == EINTR)
+                continue;
+            if (count <= 0)
+            {
+                close(fd);
+                return "";
+            }
+            filled += static_cast<size_t>(count);
+        }
+        close(fd);
+
+        const char hex[] = "0123456789abcdef";
+        std::string id;
+        id.reserve(bytes.size() * 2);
+        for (unsigned char byte : bytes)
+        {
+            id += hex[byte >> 4];
+            id += hex[byte & 0x0f];
+        }
+        return id;
+    }
 }
 
 std::string create_session(const std::string& username)
 {
-    std::lock_guard<std::mutex> lock(sessions_mutex);
+    for (int attempt = 0; attempt < 3; ++attempt)
+    {
+        std::string id = generate_session_id();
+        if (id.empty())
+            return "";
 
-    Session session;
-    session.session_id = "session_" + std::to_string(next_session_id++);
-    session.username = username;
+        std::lock_guard<std::mutex> lock(sessions_mutex);
+        bool duplicate = false;
+        for (const Session& session : sessions)
+        {
+            if (session.session_id == id)
+            {
+                duplicate = true;
+                break;
+            }
+        }
+        if (duplicate)
+            continue;
 
-    sessions.push_back(session);
-    return session.session_id;
+        Session session;
+        session.session_id = id;
+        session.username = username;
+
+        sessions.push_back(session);
+        return id;
+    }
+    return "";
 }
 
 std::string get_username_by_session(const std::string& session_id)
