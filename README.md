@@ -1,140 +1,115 @@
-## TCP Server (C++)
+<h1 align="center">TCP + HTTP Chat Server</h1>
 
-Simple TCP / HTTP messenger server written in C++ using low-level Linux sockets.
+<p align="center">
+  <img src="assets/image.png" width="128"/>
+</p>
 
-![Screenshot](Screenshot.png)
+<p align="center">A small C++17 messenger built with Linux sockets, epoll, and a shared thread pool.</p>
 
-## 🚀 Features
+<p align="center">
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" />
+  </a>
+  <a href="src/makefile">
+    <img src="https://img.shields.io/badge/C%2B%2B-17-blue.svg" alt="C++17" />
+  </a>
+  <a href="Dockerfile">
+    <img src="https://img.shields.io/badge/platform-Linux-blue.svg" alt="Linux" />
+  </a>
+  <a href="Dockerfile">
+    <img src="https://img.shields.io/badge/build-Docker-2496ED.svg" alt="Docker build" />
+  </a>
+  <a href="tests/run.sh">
+    <img src="https://img.shields.io/badge/tests-local-brightgreen.svg" alt="Local tests" />
+  </a>
+</p>
 
-• Two servers in one program.
+## What it does
 
-• HTTP server on port `8080`.
+- Serves a browser interface on HTTP port `8080` and a line-based TCP chat on port `8081`.
+- Lets users sign in with a username, see other active users, and exchange private messages across the web and TCP interfaces.
+- Keeps sessions and messages in memory. The browser refreshes an open dialog once per second; there is no WebSocket connection.
+- Includes focused tests for HTTP parsing and I/O, session handling, and TCP chat behavior.
 
-• Chat server on port `8081`.
+## Quick start
 
-• Login only by username.
+From the repository root, build the Linux image:
 
-• Chat commands:
-`/help`
-`/ip`
-`/hello`
-`/echo`
-`/html`
-`/chat <username>`
-`/back`
-`/sent_messages`
-`/session_messages`
-`/exit`
-
-• HTTP login page.
-
-• HTTP menu page after successful login.
-
-• HTTP chats page.
-
-• HTTP personal dialog page:
-`/chat/username`
-
-• HTTP routes:
-`/`
-`/menu`
-`/hello`
-`/about`
-`/chat`
-`/logout`
-
-• Web messages update without full page reload.
-
-• User cannot login twice at the same time.
-
-• 404 page for unknown routes.
-
-
-## ⚙️ Requirements
-
-• Docker (recommended).
-
-• Or: Linux, g++, make.
-
-
-## 💡 Build and Run
-
-### Docker (recommended)
-
-Build:
-
-```bash
+```sh
 docker build -t chat-server .
+docker run --rm --workdir /app/src \
+  --publish 127.0.0.1:8080:8080 \
+  --publish 127.0.0.1:8081:8081 \
+  chat-server
 ```
 
-Run:
+Open <http://127.0.0.1:8080/> and enter a username. To use the terminal interface, connect in another terminal:
 
-```bash
-docker run -p 8080:8080 -p 8081:8081 chat-server
-```
-
-### Manual (Linux only)
-
-```bash
-cd src && make && ../server
-```
-
-## Test
-
-Run the HTTP parser, HTTP I/O, and TCP chat line tests on Linux or macOS with a C++17 compiler:
-
-```bash
-sh tests/run.sh
-```
-
-## 🏗️ Architecture
-
-- Chat server uses **epoll** event loop — single thread monitors all connections, new clients are dispatched to a **ThreadPool**.
-- HTTP server uses a simple accept loop with ThreadPool.
-
-## 📁 Structure
-
-```text
-src/
-├── chat/
-├── http/
-├── shared/
-├── storage/
-└── web/
-    ├── pages/
-    └── assets/
-```
-
-
-## 🌐 HTTP
-
-Open in browser:
-
-```text
-http://127.0.0.1:8080/
-```
-
-Main pages:
-
-```text
-/
-/menu
-/chat
-/chat/username
-```
-
-## 💬 Chat
-
-Connect from terminal:
-
-```bash
+```sh
 nc 127.0.0.1 8081
 ```
 
-Then enter only your username.
+Enter a username when prompted, then type `/help` to see the available commands. Use a different username in each active browser or terminal session. Stop the server with `Ctrl+C`.
 
-## Security scope
+The `--workdir /app/src` option is required by the current image: the server loads HTML, CSS, and JavaScript from paths relative to `src/`.
 
-This is a demo with username-only login and unencrypted HTTP/TCP. Session IDs are
-random, but they do not verify a user's identity or protect traffic in transit.
-Do not expose the server to untrusted networks.
+### Build without Docker
+
+On Linux, install `g++` and `make`, then run from the repository root:
+
+```sh
+make -C src
+cd src
+../server
+```
+
+The server must start with `src/` as its working directory so it can find `web/pages` and `web/assets`.
+
+## Interfaces
+
+| Address | Purpose |
+| --- | --- |
+| `http://127.0.0.1:8080/` | Username sign-in |
+| `/menu` | Browser menu after sign-in |
+| `/chat` | Active users and conversations |
+| `/chat/<username>` | Private dialog with an active user |
+| `/inspect` | HTTP request and server details |
+| `127.0.0.1:8081` | Line-based terminal chat |
+
+In the terminal, `/chat <username>` opens a private dialog, `/back` leaves it, `/who` lists connected TCP users, and `/exit` disconnects. `/help` lists the other commands.
+
+## How it works
+
+The HTTP listener uses an accept loop. The chat listener uses `epoll` to wait for incoming connections. Both hand accepted sockets to one pool of eight workers; each worker handles its client with blocking I/O. The current `epoll` loop does **not** monitor established chat connections.
+
+Messages and sessions live in process memory, so restarting the server clears them. The browser polls `/chat-data/<username>` every second for new messages.
+
+```text
+src/main.cpp          starts both listeners and the shared thread pool
+src/server/           epoll accept loop and thread pool
+src/chat/             TCP commands, client tracking, and authorization
+src/http/             HTTP request handling, responses, and pages
+src/storage/          in-memory messages and sessions
+src/web/              HTML, CSS, and JavaScript
+tests/                focused C++ regression tests
+```
+
+## Tests
+
+Run the test suite from the repository root with a C++17 compiler on Linux or macOS:
+
+```sh
+sh tests/run.sh
+```
+
+The runnable server uses Linux `epoll`; the tests can also run on macOS because they compile the portable components separately.
+
+## Security and limits
+
+This is a local demo, not an Internet-facing chat service. Login checks a username but does not verify identity. HTTP and TCP traffic is unencrypted. Session IDs are random, but they cannot compensate for the missing authentication and transport encryption. Messages and sessions are not persisted.
+
+The Docker command publishes both ports only on localhost. The native server binds all network interfaces; run it only on a trusted machine or restrict ports `8080` and `8081` with a firewall.
+
+## License
+
+This project is released under the [MIT License](LICENSE).
