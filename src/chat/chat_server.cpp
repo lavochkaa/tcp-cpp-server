@@ -91,9 +91,9 @@ void handle_client(int client_fd, sockaddr_in client_addr)
             if (!send_all(client_fd, responce)) break;
         }
 
-        else if (message.rfind("/echo", 0) == 0)
+        else if (message == "/echo" || message.rfind("/echo ", 0) == 0)
         {
-            std::string client_message = message.substr(6);
+            std::string client_message = message == "/echo" ? "" : message.substr(6);
             std::cout << "Echo from " << client.username << ":" << client_message << "\n";
             std::string responce = "You said:" + client_message + "\n";
             if (!send_all(client_fd, responce)) break;

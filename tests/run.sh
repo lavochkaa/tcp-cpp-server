@@ -30,3 +30,10 @@ trap 'rm -rf "$build_dir"' EXIT HUP INT TERM
     "$project_root/src/shared/utils.cpp" "$project_root/src/chat/authorizate.cpp" \
     "$project_root/tests/chat_authorize_test.cpp" -o "$build_dir/chat_authorize_test"
 "$build_dir/chat_authorize_test"
+
+"${CXX:-g++}" -std=c++17 -Wall -Wextra -Werror -pthread -I"$project_root/src" \
+    "$project_root/src/shared/utils.cpp" "$project_root/src/chat/authorizate.cpp" \
+    "$project_root/src/chat/client_manager.cpp" "$project_root/src/chat/chat_server.cpp" \
+    "$project_root/src/storage/message_store.cpp" "$project_root/src/storage/session_store.cpp" \
+    "$project_root/tests/chat_echo_test.cpp" -o "$build_dir/chat_echo_test"
+"$build_dir/chat_echo_test"
