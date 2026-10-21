@@ -37,10 +37,13 @@ void handle_client(int client_fd, sockaddr_in client_addr)
 
     std::cout << client.username << " logged in!\n";
     std::string welcome_msg = "Welcome, " + username + "!\n";
-    send(client_fd, welcome_msg.c_str(), welcome_msg.size(), 0);
-
     std::string main_menu = "\nEnter /help for show commands\n";
-    send(client_fd, main_menu.c_str(), main_menu.size(), 0);
+    if (!send_all(client_fd, welcome_msg) || !send_all(client_fd, main_menu))
+    {
+        remove_client(client_fd);
+        close(client_fd);
+        return;
+    }
 
     std::string active_chat_user;
 
@@ -69,7 +72,7 @@ void handle_client(int client_fd, sockaddr_in client_addr)
             help += "/help - Show available commands\n";
             help += "/exit - Disconnect from server\n";
 
-            send(client_fd, help.c_str(), help.size(), 0);
+            if (!send_all(client_fd, help)) break;
         }
 
         else if (message == "/ip")
@@ -79,13 +82,13 @@ void handle_client(int client_fd, sockaddr_in client_addr)
             responce += " and your port is: ";
             responce += std::to_string(ntohs(client_addr.sin_port));
             responce += "\n";
-            send(client_fd, responce.c_str(), responce.size(), 0);
+            if (!send_all(client_fd, responce)) break;
         }
 
         else if (message == "/hello")
         {
             std::string responce = "\nHello from the server!\n";
-            send (client_fd, responce.c_str(), responce.size(), 0);
+            if (!send_all(client_fd, responce)) break;
         }
 
         else if (message.rfind("/echo", 0) == 0)
@@ -93,14 +96,14 @@ void handle_client(int client_fd, sockaddr_in client_addr)
             std::string client_message = message.substr(6);
             std::cout << "Echo from " << client.username << ":" << client_message << "\n";
             std::string responce = "You said:" + client_message + "\n";
-            send(client_fd, responce.c_str(), responce.size(), 0); 
+            if (!send_all(client_fd, responce)) break;
         }
 
         else if (message == "/html")
         {
             std::string response =
                 "\n<!DOCTYPE html>\n<html>\n<head>\n<title>My Web Server</title>\n</head>\n<body>\n<h1>Hello, World!</h1>\n<p>This is a simple HTML page served by the C++ server.</p>\n</body>\n</html>\n";
-            send(client_fd, response.c_str(), response.size(), 0);
+            if (!send_all(client_fd, response)) break;
         }
 
         else if (message == "/back")
@@ -108,13 +111,13 @@ void handle_client(int client_fd, sockaddr_in client_addr)
             if (active_chat_user.empty())
             {
                 std::string fail = "You are not in chat mode.\n";
-                send(client_fd, fail.c_str(), fail.size(), 0);
+                if (!send_all(client_fd, fail)) break;
             }
             else
             {
                 active_chat_user.clear();
                 std::string ok = "Back to main menu.\n";
-                send(client_fd, ok.c_str(), ok.size(), 0);
+                if (!send_all(client_fd, ok)) break;
             }
         }
 
@@ -151,7 +154,7 @@ void handle_client(int client_fd, sockaddr_in client_addr)
 
             response += "total stored messages: " + std::to_string(get_total_messages_count()) + "\n";
 
-            send(client_fd, response.c_str(), response.size(), 0);
+            if (!send_all(client_fd, response)) break;
         }
 
         else if (message == "/who")
@@ -180,7 +183,7 @@ void handle_client(int client_fd, sockaddr_in client_addr)
                     response += " -" + username + " (web)\n";
                 }
             }
-            send(client_fd, response.c_str(), response.size(), 0);
+            if (!send_all(client_fd, response)) break;
         }
         
         else if (message.rfind("/chat ", 0) == 0)
@@ -190,21 +193,21 @@ void handle_client(int client_fd, sockaddr_in client_addr)
             if (to_user == client.username)
             {
                 std::string fail = "You cannot send message to yourself.\n";
-                send(client_fd, fail.c_str(), fail.size(), 0);
+                if (!send_all(client_fd, fail)) break;
                 continue;
             }
 
             if (to_user.empty())
             {
                 std::string fail = "Usage: /chat <username>\n";
-                send(client_fd, fail.c_str(), fail.size(), 0);
+                if (!send_all(client_fd, fail)) break;
                 continue;
             }
 
             if (!is_user_online(to_user) && !is_session_active(to_user))
             {
                 std::string fail = "User is not logged in.\n";
-                send(client_fd, fail.c_str(), fail.size(), 0);
+                if (!send_all(client_fd, fail)) break;
                 continue;
             }
 
@@ -224,9 +227,9 @@ void handle_client(int client_fd, sockaddr_in client_addr)
             }
 
             active_chat_user = to_user;
-            send(client_fd, dialog_preview.c_str(), dialog_preview.size(), 0);
+            if (!send_all(client_fd, dialog_preview)) break;
             std::string enter_message = "Enter messages now. Use /back to leave this chat.\n";
-            send(client_fd, enter_message.c_str(), enter_message.size(), 0);
+            if (!send_all(client_fd, enter_message)) break;
         }
 
         else if (message == "/sent_messages")
@@ -236,7 +239,7 @@ void handle_client(int client_fd, sockaddr_in client_addr)
             if (sent_messages.empty())
             {
                 std::string no_messages = "No messages sent.\n";
-                send(client_fd, no_messages.c_str(), no_messages.size(), 0);
+                if (!send_all(client_fd, no_messages)) break;
             }
 
             else
@@ -248,7 +251,7 @@ void handle_client(int client_fd, sockaddr_in client_addr)
                     response += "To [" + msg.to + "]: " + msg.text + "\n";
                 }
 
-                send(client_fd, response.c_str(), response.size(), 0);
+                if (!send_all(client_fd, response)) break;
             }
             
         }
@@ -260,7 +263,7 @@ void handle_client(int client_fd, sockaddr_in client_addr)
             if (user_messages.empty())
             {
                 std::string no_messages = "No messages.\n";
-                send(client_fd, no_messages.c_str(), no_messages.size(), 0);
+                if (!send_all(client_fd, no_messages)) break;
             }
 
             else
@@ -272,7 +275,7 @@ void handle_client(int client_fd, sockaddr_in client_addr)
                     response += "From [" + msg.from + "]: " + msg.text + "\n"; 
                 }
 
-                send(client_fd, response.c_str(), response.size(), 0);
+                if (!send_all(client_fd, response)) break;
             }
 
         }
@@ -287,7 +290,7 @@ void handle_client(int client_fd, sockaddr_in client_addr)
             if (!is_user_online(active_chat_user) && !is_session_active(active_chat_user))
             {
                 std::string fail = "User is no longer logged in.\n";
-                send(client_fd, fail.c_str(), fail.size(), 0);
+                if (!send_all(client_fd, fail)) break;
                 active_chat_user.clear();
                 continue;
             }
@@ -301,13 +304,13 @@ void handle_client(int client_fd, sockaddr_in client_addr)
                 send_to_user(active_chat_user, private_msg);
 
             std::string local_echo = "[" + client.username + "]: " + message + "\n";
-            send(client_fd, local_echo.c_str(), local_echo.size(), 0);
+            if (!send_all(client_fd, local_echo)) break;
         }
 
         else
         {
             std::string response = "\nInvalid choice. Please try again.\n";
-            send(client_fd, response.c_str(), response.size(), 0);
+            if (!send_all(client_fd, response)) break;
         }
     }
 

@@ -10,18 +10,18 @@
 
 bool authorize(int client_fd, std::string& username, LineReader& reader)
 {
-    send(client_fd, "Login: ", 7, 0);
+    if (!send_all(client_fd, "Login: "))
+        return false;
     std::string login;
     if (!reader.read_line(login) || login.empty())
         return false;
 
     if (is_user_online(login) || is_session_active(login))
     {
-        send(client_fd, "User already logged in!\n", 24, 0);
+        send_all(client_fd, "User already logged in!\n");
         return false;
     }
 
     username = login;
-    send(client_fd, "Authorization successful!\n", 26, 0);
-    return true;
+    return send_all(client_fd, "Authorization successful!\n");
 }

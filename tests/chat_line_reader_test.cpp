@@ -99,6 +99,32 @@ namespace
         close(sockets[0]);
         close(sockets[1]);
     }
+
+    void test_complete_write_with_small_send_buffer()
+    {
+        int sockets[2];
+        assert(socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) == 0);
+        const int buffer_size = 1024;
+        assert(setsockopt(sockets[0], SOL_SOCKET, SO_SNDBUF,
+                          &buffer_size, sizeof(buffer_size)) == 0);
+
+        const std::string payload(128 * 1024, 'x');
+        std::string received;
+        std::thread reader([&] {
+            char buffer[2048];
+            ssize_t count;
+            while ((count = recv(sockets[1], buffer, sizeof(buffer), 0)) > 0)
+                received.append(buffer, static_cast<size_t>(count));
+            assert(count == 0);
+        });
+
+        assert(send_all(sockets[0], payload));
+        assert(shutdown(sockets[0], SHUT_WR) == 0);
+        reader.join();
+        assert(received == payload);
+        close(sockets[0]);
+        close(sockets[1]);
+    }
 }
 
 int main()
@@ -107,4 +133,5 @@ int main()
     test_fragmented_line();
     test_max_length_crlf();
     test_overlong_and_incomplete_lines();
+    test_complete_write_with_small_send_buffer();
 }
