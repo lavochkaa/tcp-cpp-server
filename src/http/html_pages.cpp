@@ -9,11 +9,46 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <cctype>
 #include <string>
 #include <vector>
 
 namespace
 {
+    bool is_sensitive_header(const std::string& name)
+    {
+        std::string lower;
+        lower.reserve(name.size());
+        for (unsigned char ch : name)
+            lower += static_cast<char>(std::tolower(ch));
+        return lower == "cookie" || lower == "authorization" ||
+               lower == "proxy-authorization";
+    }
+
+    std::string redact_request_headers(const std::string& request)
+    {
+        const size_t header_end = request.find("\r\n\r\n");
+        const size_t first_line_end = request.find("\r\n");
+        if (header_end == std::string::npos || first_line_end == std::string::npos)
+            return "[invalid request]";
+
+        std::string redacted = request.substr(0, first_line_end + 2);
+        size_t line_start = first_line_end + 2;
+        while (line_start < header_end)
+        {
+            const size_t line_end = request.find("\r\n", line_start);
+            const std::string line = request.substr(line_start, line_end - line_start);
+            const size_t colon = line.find(':');
+            if (colon != std::string::npos && is_sensitive_header(line.substr(0, colon)))
+                redacted += line.substr(0, colon + 1) + " [redacted]";
+            else
+                redacted += line;
+            redacted += "\r\n";
+            line_start = line_end + 2;
+        }
+        return redacted + request.substr(header_end + 2);
+    }
+
     std::string join_user_list_html(const std::vector<std::string>& users)
     {
         if (users.empty())
@@ -333,6 +368,11 @@ std::string make_http_inspect_page(int client_fd,
         inet_ntop(AF_INET, &local_addr.sin_addr, local_ip, INET_ADDRSTRLEN);
 
     std::vector<std::pair<std::string, std::string>> headers = get_headers(request);
+    for (auto& header : headers)
+    {
+        if (is_sensitive_header(header.first))
+            header.second = "[redacted]";
+    }
     std::vector<std::string> online_users = get_online_usernames();
     std::vector<std::string> session_users = get_session_usernames();
     std::vector<std::string> chat_partners;
@@ -373,7 +413,7 @@ std::string make_http_inspect_page(int client_fd,
     body += "<div class=\"meta-row\"><span class=\"meta-label\">local ip</span><span class=\"meta-value\">" + escape_html(local_ip) + "</span></div>";
     body += "<div class=\"meta-row\"><span class=\"meta-label\">local port</span><span class=\"meta-value\">" + std::to_string(ntohs(local_addr.sin_port)) + "</span></div>";
     body += "<div class=\"meta-row\"><span class=\"meta-label\">current user</span><span class=\"meta-value\">" + escape_html(current_user.empty() ? "(guest)" : current_user) + "</span></div>";
-    body += "<div class=\"meta-row\"><span class=\"meta-label\">session cookie</span><span class=\"meta-value\">" + escape_html(get_cookie_value(request, "session_id")) + "</span></div>";
+    body += "<div class=\"meta-row\"><span class=\"meta-label\">session cookie</span><span class=\"meta-value\">" + std::string(get_cookie_value(request, "session_id").empty() ? "(none)" : "[redacted]") + "</span></div>";
     body += "</div></div>";
     body += "</section>";
 
@@ -437,7 +477,7 @@ std::string make_http_inspect_page(int client_fd,
     body += "</div>";
     body += "</section>";
 
-    body += "<section class=\"card\"><span class=\"eyebrow-tag\">Raw request</span><h2>Unmodified request text</h2><pre>" + escape_html(request) + "</pre></section>";
+    body += "<section class=\"card\"><span class=\"eyebrow-tag\">Raw request</span><h2>Request text (sensitive headers redacted)</h2><pre>" + escape_html(redact_request_headers(request)) + "</pre></section>";
     body += "<a class=\"text-link\" href=\"/menu\">Back to menu</a>";
     body += "</main>";
 

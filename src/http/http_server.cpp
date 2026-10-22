@@ -86,7 +86,8 @@ void handle_http_client(int client_fd)
                                          "text/plain", "Session unavailable");
             else
             {
-                std::string cookie = "Set-Cookie: session_id=" + session_id;
+                std::string cookie = "Set-Cookie: session_id=" + session_id +
+                                     "; Path=/; HttpOnly; SameSite=Strict";
                 response = make_redirect_response("/menu", cookie);
             }
         }
@@ -205,7 +206,8 @@ void handle_http_client(int client_fd)
         if (!session_id.empty())
             remove_session(session_id);
 
-        response = make_redirect_response("/", "Set-Cookie: session_id=; Max-Age=0");
+        response = make_redirect_response("/", "Set-Cookie: session_id=; Path=/; "
+                                              "Max-Age=0; HttpOnly; SameSite=Strict");
     }
     else
     {

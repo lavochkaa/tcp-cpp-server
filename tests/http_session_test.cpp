@@ -44,16 +44,31 @@ int main()
     const size_t start = login.find(cookie_header);
     assert(start != std::string::npos);
     const size_t id_start = start + cookie_header.size();
-    const size_t id_end = login.find("\r\n", id_start);
+    const size_t id_end = login.find(';', id_start);
     assert(id_end != std::string::npos);
     const std::string session_id = login.substr(id_start, id_end - id_start);
     assert(session_id.size() == 64);
+    assert(login.find("HttpOnly") != std::string::npos);
+    assert(login.find("SameSite=Strict") != std::string::npos);
+    assert(login.find("Path=/") != std::string::npos);
+
+    const std::string inspect = exchange("GET /inspect HTTP/1.1\r\nHost: localhost\r\n"
+                                         "cOoKiE: session_id=" + session_id +
+                                         "; theme=dark\r\naUtHoRiZaTiOn: Bearer inspect-secret\r\n\r\n");
+    assert(inspect.find("HTTP/1.1 200 OK") == 0);
+    assert(inspect.find(session_id) == std::string::npos);
+    assert(inspect.find("inspect-secret") == std::string::npos);
+    assert(inspect.find("Host: localhost") != std::string::npos);
+    assert(inspect.find("[redacted]") != std::string::npos);
 
     assert(exchange(chat_request("session_1")).find("HTTP/1.1 302 Found") == 0);
     assert(exchange(chat_request(session_id)).find("HTTP/1.1 200 OK") == 0);
 
     const std::string logout = "GET /logout HTTP/1.1\r\nHost: localhost\r\n"
                                "Cookie: session_id=" + session_id + "\r\n\r\n";
-    assert(exchange(logout).find("HTTP/1.1 302 Found") == 0);
+    const std::string logout_response = exchange(logout);
+    assert(logout_response.find("HTTP/1.1 302 Found") == 0);
+    assert(logout_response.find("session_id=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict") !=
+           std::string::npos);
     assert(exchange(chat_request(session_id)).find("HTTP/1.1 302 Found") == 0);
 }
