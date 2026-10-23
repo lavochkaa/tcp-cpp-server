@@ -3,12 +3,14 @@
 #include <iostream>
 #include <functional>
 #include <sys/epoll.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <stdexcept>
 #include <unistd.h>
 
 class EventLoop {
 public:
-    EventLoop(int server_fd, std::function<void(int)> on_new_client) {
+    EventLoop(int server_fd, std::function<void(int, sockaddr_in)> on_new_client) {
         on_new_client_ = on_new_client;
         server_fd_ = server_fd;
         epfd_ = epoll_create1(0);
@@ -38,8 +40,14 @@ public:
                 int fd = events[i].data.fd;
 
                 if (fd == server_fd_) {
-                    int client_fd = accept(server_fd_, nullptr, nullptr);
-                    on_new_client_(client_fd);
+                    sockaddr_in client_addr{};
+                    socklen_t client_size = sizeof(client_addr);
+                    int client_fd = accept(server_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_size);
+                    if (client_fd == -1) {
+                        std::cerr << "accept chat error\n";
+                        continue;
+                    }
+                    on_new_client_(client_fd, client_addr);
                 } else {
                     char buf[1024];
                     int bytes = recv(fd, buf, sizeof(buf), 0);
@@ -58,5 +66,5 @@ public:
 private:
     int epfd_ = -1;
     int server_fd_ = -1;
-    std::function<void(int)> on_new_client_;
+    std::function<void(int, sockaddr_in)> on_new_client_;
 };

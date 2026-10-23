@@ -88,10 +88,10 @@ int main()
     ThreadPool pool(8);
 
     std::thread http_thread(run_http_server, http_fd, std::ref(pool));
-    EventLoop chat_loop(chat_fd, [&pool](int client_fd) {
-        pool.submit([client_fd] {
+    EventLoop chat_loop(chat_fd, [&pool](int client_fd, sockaddr_in client_addr) {
+        pool.submit([client_fd, client_addr] {
             std::cerr << "New client fd=" << client_fd << "\n";
-            handle_client(client_fd, sockaddr_in{});
+            handle_client(client_fd, client_addr);
         });
     });
     std::thread chat_thread([&chat_loop] { chat_loop.run(); });
