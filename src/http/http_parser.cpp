@@ -21,6 +21,51 @@ namespace
         return true;
     }
 
+    int hex_digit_value(char ch)
+    {
+        if (ch >= '0' && ch <= '9')
+            return ch - '0';
+        if (ch >= 'a' && ch <= 'f')
+            return ch - 'a' + 10;
+        if (ch >= 'A' && ch <= 'F')
+            return ch - 'A' + 10;
+        return -1;
+    }
+
+    std::string url_decode(const std::string& value)
+    {
+        std::string decoded;
+        decoded.reserve(value.size());
+
+        for (size_t i = 0; i < value.size(); ++i)
+        {
+            if (value[i] == '+')
+            {
+                decoded += ' ';
+            }
+            else if (value[i] == '%' && i + 2 < value.size())
+            {
+                const int high = hex_digit_value(value[i + 1]);
+                const int low = hex_digit_value(value[i + 2]);
+                if (high >= 0 && low >= 0)
+                {
+                    decoded += static_cast<char>(high * 16 + low);
+                    i += 2;
+                }
+                else
+                {
+                    decoded += value[i];
+                }
+            }
+            else
+            {
+                decoded += value[i];
+            }
+        }
+
+        return decoded;
+    }
+
     std::string get_delimited_value(const std::string& fields, const std::string& key,
                                     char separator, bool skip_spaces)
     {
@@ -105,7 +150,7 @@ std::string get_cookie_value(const std::string& request, const std::string& key)
 
 std::string get_form_value(const std::string& body, const std::string& key)
 {
-    return get_delimited_value(body, key, '&', false);
+    return url_decode(get_delimited_value(body, key, '&', false));
 }
 
 std::vector<std::pair<std::string, std::string>> get_headers(const std::string& request)

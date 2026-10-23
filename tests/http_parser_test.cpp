@@ -38,6 +38,14 @@ int main()
                  get_form_value("other_login=wrong", "login"), "");
     expect_equal("equals sign in form value",
                  get_form_value("login=first=last", "login"), "first=last");
+    expect_equal("plus encoded form value",
+                 get_form_value("message=hello+world", "message"), "hello world");
+    expect_equal("percent encoded form value",
+                 get_form_value("message=hello%20world%21", "message"), "hello world!");
+    expect_equal("encoded form delimiters",
+                 get_form_value("message=a%26b%3Dc", "message"), "a&b=c");
+    expect_equal("invalid percent escape preserved",
+                 get_form_value("message=100%zz", "message"), "100%zz");
 
     return failures == 0 ? 0 : 1;
 }
