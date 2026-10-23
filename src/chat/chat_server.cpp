@@ -16,6 +16,14 @@
 
 void handle_client(int client_fd, sockaddr_in client_addr)
 {
+    sockaddr_in peer_addr{};
+    socklen_t peer_len = sizeof(peer_addr);
+    if (getpeername(client_fd, reinterpret_cast<sockaddr*>(&peer_addr), &peer_len) == 0 &&
+        peer_addr.sin_family == AF_INET)
+    {
+        client_addr = peer_addr;
+    }
+
     char client_ip[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, INET_ADDRSTRLEN);
 
