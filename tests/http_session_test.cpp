@@ -37,6 +37,13 @@ namespace
 
 int main()
 {
+    const std::string invalid_body = "login=ali%0D%0Ace";
+    const std::string invalid_login = exchange(
+        "POST /login HTTP/1.1\r\nHost: localhost\r\nContent-Length: " +
+        std::to_string(invalid_body.size()) + "\r\n\r\n" + invalid_body);
+    assert(invalid_login.find("HTTP/1.1 200 OK") == 0);
+    assert(invalid_login.find("Set-Cookie:") == std::string::npos);
+
     const std::string login = exchange("POST /login HTTP/1.1\r\nHost: localhost\r\n"
                                        "Content-Length: 11\r\n\r\nlogin=alice");
     assert(login.find("HTTP/1.1 302 Found") == 0);

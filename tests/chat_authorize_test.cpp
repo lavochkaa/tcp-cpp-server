@@ -12,6 +12,18 @@ bool is_session_active(const std::string&) { return false; }
 
 int main()
 {
+    int invalid[2];
+    assert(socketpair(AF_UNIX, SOCK_STREAM, 0, invalid) == 0);
+    const std::string invalid_login = "ali\rce\n";
+    assert(send(invalid[1], invalid_login.data(), invalid_login.size(), 0) ==
+           static_cast<ssize_t>(invalid_login.size()));
+    LineReader invalid_reader(invalid[0]);
+    std::string invalid_username;
+    assert(!authorize(invalid[0], invalid_username, invalid_reader));
+    assert(invalid_username.empty());
+    close(invalid[0]);
+    close(invalid[1]);
+
     int connected[2];
     assert(socketpair(AF_UNIX, SOCK_STREAM, 0, connected) == 0);
     const std::string login = "alice\n";

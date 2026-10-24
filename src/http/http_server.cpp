@@ -7,6 +7,7 @@
 #include "chat/client_manager.hpp"
 #include "storage/message_store.hpp"
 #include "storage/session_store.hpp"
+#include "shared/utils.hpp"
 
 #include <string>
 #include <unistd.h>
@@ -70,6 +71,12 @@ void handle_http_client(int client_fd)
         {
             response = make_html_response(
                 make_login_page("<p style=\"color: red;\">Login cannot be empty.</p>")
+            );
+        }
+        else if (!is_valid_username(login))
+        {
+            response = make_html_response(
+                make_login_page("<p style=\"color: red;\">Invalid username.</p>")
             );
         }
         else if (is_user_logged_in_anywhere(login))
