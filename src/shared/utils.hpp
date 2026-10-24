@@ -3,6 +3,7 @@
 #include <string>
 
 bool send_all(int client_fd, const std::string& text);
+bool is_valid_username(const std::string& username);
 
 class LineReader
 {

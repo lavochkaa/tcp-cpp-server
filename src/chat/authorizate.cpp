@@ -13,8 +13,13 @@ bool authorize(int client_fd, std::string& username, LineReader& reader)
     if (!send_all(client_fd, "Login: "))
         return false;
     std::string login;
-    if (!reader.read_line(login) || login.empty())
+    if (!reader.read_line(login))
         return false;
+    if (!is_valid_username(login))
+    {
+        send_all(client_fd, "Invalid username.\n");
+        return false;
+    }
 
     if (is_user_online(login) || is_session_active(login))
     {

@@ -4,6 +4,19 @@
 #include <sys/socket.h>
 #include <string>
 
+bool is_valid_username(const std::string& username)
+{
+    if (username.empty())
+        return false;
+
+    for (unsigned char ch : username)
+    {
+        if (ch < 0x20 || ch == 0x7f)
+            return false;
+    }
+    return true;
+}
+
 bool send_all(int client_fd, const std::string& text)
 {
 #if defined(SO_NOSIGPIPE) && !defined(MSG_NOSIGNAL)
