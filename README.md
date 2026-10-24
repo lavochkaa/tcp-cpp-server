@@ -37,7 +37,7 @@ From the repository root, build the Linux image:
 
 ```sh
 docker build -t chat-server .
-docker run --rm --workdir /app/src \
+docker run --rm \
   --publish 127.0.0.1:8080:8080 \
   --publish 127.0.0.1:8081:8081 \
   chat-server
@@ -51,7 +51,7 @@ nc 127.0.0.1 8081
 
 Enter a username when prompted, then type `/help` to see the available commands. Use a different username in each active browser or terminal session. Stop the server with `Ctrl+C`.
 
-The `--workdir /app/src` option is required by the current image: the server loads HTML, CSS, and JavaScript from paths relative to `src/`.
+The image starts the server from `/app/src`, so it finds the HTML, CSS, and JavaScript files without an extra `--workdir` option.
 
 ### Build without Docker
 

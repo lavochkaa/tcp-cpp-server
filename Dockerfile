@@ -7,5 +7,7 @@ COPY src/ ./src/
 
 RUN cd src && make
 
-EXPOSE 8081
+WORKDIR /app/src
+
+EXPOSE 8080 8081
 CMD ["/app/server"]
