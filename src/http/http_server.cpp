@@ -141,7 +141,7 @@ void handle_http_client(int client_fd)
             else if (!is_user_logged_in_anywhere(to_user))
                 response = make_html_response(make_chat_list_page(current_user, "User is not logged in."));
             else
-                response = make_redirect_response("/chat/" + to_user);
+                response = make_redirect_response("/chat/" + encode_path_segment(to_user));
         }
         else
         {
@@ -151,7 +151,7 @@ void handle_http_client(int client_fd)
     else if (path.rfind("/chat-data/", 0) == 0)
     {
         std::string current_user = get_current_http_user(request);
-        std::string other_user = path.substr(11);
+        std::string other_user = decode_path_segment(path.substr(11));
 
         if (current_user.empty())
             response = make_redirect_response("/");
@@ -164,7 +164,7 @@ void handle_http_client(int client_fd)
     else if (path.rfind("/chat/", 0) == 0)
     {
         std::string current_user = get_current_http_user(request);
-        std::string other_user = path.substr(6);
+        std::string other_user = decode_path_segment(path.substr(6));
 
         if (current_user.empty())
         {

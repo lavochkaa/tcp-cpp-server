@@ -71,6 +71,44 @@ int main()
     assert(exchange(chat_request("session_1")).find("HTTP/1.1 302 Found") == 0);
     assert(exchange(chat_request(session_id)).find("HTTP/1.1 200 OK") == 0);
 
+    const std::string encoded_user = "bob%23%3F%2F%2B%25";
+    const std::string other_body = "login=" + encoded_user;
+    const std::string other_login = exchange(
+        "POST /login HTTP/1.1\r\nHost: localhost\r\nContent-Length: " +
+        std::to_string(other_body.size()) + "\r\n\r\n" + other_body);
+    assert(other_login.find("HTTP/1.1 302 Found") == 0);
+
+    const std::string chat_list = exchange(chat_request(session_id));
+    assert(chat_list.find("href=\"/chat/" + encoded_user + "\"") != std::string::npos);
+
+    const std::string open_body = "user=" + encoded_user;
+    const std::string open_chat = exchange(
+        "POST /chat HTTP/1.1\r\nHost: localhost\r\nCookie: session_id=" +
+        session_id + "\r\nContent-Length: " + std::to_string(open_body.size()) +
+        "\r\n\r\n" + open_body);
+    assert(open_chat.find("Location: /chat/" + encoded_user + "\r\n") !=
+           std::string::npos);
+
+    const std::string chat_page = exchange(
+        "GET /chat/" + encoded_user + " HTTP/1.1\r\nHost: localhost\r\n"
+        "Cookie: session_id=" + session_id + "\r\n\r\n");
+    assert(chat_page.find("Chat with bob#?/+%") != std::string::npos);
+    assert(chat_page.find("action=\"/chat/" + encoded_user + "\"") != std::string::npos);
+    assert(chat_page.find("data-chat-url=\"/chat-data/" + encoded_user + "\"") !=
+           std::string::npos);
+
+    const std::string message_body = "message=hello";
+    const std::string send_message = exchange(
+        "POST /chat/" + encoded_user + " HTTP/1.1\r\nHost: localhost\r\n"
+        "Cookie: session_id=" + session_id + "\r\nContent-Length: " +
+        std::to_string(message_body.size()) + "\r\n\r\n" + message_body);
+    assert(send_message.find("Location: /chat/" + encoded_user + "\r\n") !=
+           std::string::npos);
+    const std::string chat_data = exchange(
+        "GET /chat-data/" + encoded_user + " HTTP/1.1\r\nHost: localhost\r\n"
+        "Cookie: session_id=" + session_id + "\r\n\r\n");
+    assert(chat_data.find("hello") != std::string::npos);
+
     const std::string logout = "GET /logout HTTP/1.1\r\nHost: localhost\r\n"
                                "Cookie: session_id=" + session_id + "\r\n\r\n";
     const std::string logout_response = exchange(logout);
