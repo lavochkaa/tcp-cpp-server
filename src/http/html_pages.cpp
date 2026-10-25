@@ -223,7 +223,7 @@ std::string make_chat_list_page(const std::string& current_user,
     {
         for (const std::string& username : available_users)
         {
-            body += "<a class=\"user-link\" href=\"/chat/" + escape_html(username) + "\">";
+            body += "<a class=\"user-link\" href=\"/chat/" + encode_path_segment(username) + "\">";
             body += "<span class=\"user-link-main\">" + escape_html(username) + "</span>";
             body += "<span class=\"user-link-meta\">Open live dialog from the browser.</span>";
             body += "</a>";
@@ -242,7 +242,7 @@ std::string make_chat_list_page(const std::string& current_user,
     {
         for (const std::string& username : chat_partners)
         {
-            body += "<a class=\"user-link\" href=\"/chat/" + escape_html(username) + "\">";
+            body += "<a class=\"user-link\" href=\"/chat/" + encode_path_segment(username) + "\">";
             body += "<span class=\"user-link-main\">" + escape_html(username) + "</span>";
 
             if (is_user_logged_in_anywhere(username))
@@ -294,6 +294,7 @@ std::string make_chat_dialog_page(const std::string& current_user,
                                   const std::string& other_user)
 {
     std::string body;
+    const std::string encoded_user = encode_path_segment(other_user);
     body += "<main class=\"chat-shell page-stack\">";
     body += "<section class=\"hero\">";
     body += "<span class=\"hero-eyebrow\">Live dialog</span>";
@@ -328,7 +329,7 @@ std::string make_chat_dialog_page(const std::string& current_user,
     body += "<div class=\"chat-main\">";
     body += "<div class=\"chat-panel\">";
     body += "<div id=\"messages\"><div class=\"empty\">Loading messages...</div></div>";
-    body += "<form class=\"chat-form\" method=\"POST\" action=\"/chat/" + escape_html(other_user) + "\">";
+    body += "<form class=\"chat-form\" method=\"POST\" action=\"/chat/" + encoded_user + "\">";
     body += "<input id=\"messageInput\" name=\"message\" placeholder=\"Write a message\">";
     body += "<button type=\"submit\">Send message</button>";
     body += "</form>";
@@ -343,7 +344,7 @@ std::string make_chat_dialog_page(const std::string& current_user,
         "Chat with " + other_user,
         body,
         "chat-page",
-        "data-chat-url=\"/chat-data/" + escape_html(other_user) + "\"",
+        "data-chat-url=\"/chat-data/" + encoded_user + "\"",
         "/assets/js/chat.js"
     );
 }

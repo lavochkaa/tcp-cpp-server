@@ -46,6 +46,12 @@ int main()
                  get_form_value("message=a%26b%3Dc", "message"), "a&b=c");
     expect_equal("invalid percent escape preserved",
                  get_form_value("message=100%zz", "message"), "100%zz");
+    expect_equal("path segment special characters",
+                 encode_path_segment("bob#?/+%"), "bob%23%3F%2F%2B%25");
+    expect_equal("path plus stays plus",
+                 decode_path_segment("bob+one"), "bob+one");
+    expect_equal("encoded path segment round trip",
+                 decode_path_segment("bob%23%3F%2F%2B%25"), "bob#?/+%");
 
     return failures == 0 ? 0 : 1;
 }

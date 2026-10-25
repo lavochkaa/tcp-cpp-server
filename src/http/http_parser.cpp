@@ -32,14 +32,14 @@ namespace
         return -1;
     }
 
-    std::string url_decode(const std::string& value)
+    std::string url_decode(const std::string& value, bool plus_as_space)
     {
         std::string decoded;
         decoded.reserve(value.size());
 
         for (size_t i = 0; i < value.size(); ++i)
         {
-            if (value[i] == '+')
+            if (plus_as_space && value[i] == '+')
             {
                 decoded += ' ';
             }
@@ -150,7 +150,34 @@ std::string get_cookie_value(const std::string& request, const std::string& key)
 
 std::string get_form_value(const std::string& body, const std::string& key)
 {
-    return url_decode(get_delimited_value(body, key, '&', false));
+    return url_decode(get_delimited_value(body, key, '&', false), true);
+}
+
+std::string encode_path_segment(const std::string& value)
+{
+    constexpr char hex[] = "0123456789ABCDEF";
+    std::string encoded;
+    for (unsigned char ch : value)
+    {
+        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+            (ch >= '0' && ch <= '9') || ch == '-' || ch == '_' ||
+            ch == '.' || ch == '~')
+        {
+            encoded += static_cast<char>(ch);
+        }
+        else
+        {
+            encoded += '%';
+            encoded += hex[ch >> 4];
+            encoded += hex[ch & 0x0F];
+        }
+    }
+    return encoded;
+}
+
+std::string decode_path_segment(const std::string& value)
+{
+    return url_decode(value, false);
 }
 
 std::vector<std::pair<std::string, std::string>> get_headers(const std::string& request)
