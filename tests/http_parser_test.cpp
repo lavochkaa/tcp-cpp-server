@@ -20,6 +20,12 @@ namespace
 
 int main()
 {
+    expect_equal("query string is not part of route",
+                 get_path("GET /chat?view=recent HTTP/1.1"), "/chat");
+    expect_equal("encoded question mark remains in route",
+                 get_path("GET /chat/bob%3Fname?view=recent HTTP/1.1"),
+                 "/chat/bob%3Fname");
+
     const std::string request =
         "GET /menu HTTP/1.1\r\n"
         "X-Cookie: session_id=wrong\r\n"

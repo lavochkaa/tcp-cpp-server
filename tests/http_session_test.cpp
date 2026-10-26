@@ -37,6 +37,9 @@ namespace
 
 int main()
 {
+    assert(exchange("GET /?source=bookmark HTTP/1.1\r\nHost: localhost\r\n\r\n")
+               .find("HTTP/1.1 200 OK") == 0);
+
     const std::string invalid_body = "login=ali%0D%0Ace";
     const std::string invalid_login = exchange(
         "POST /login HTTP/1.1\r\nHost: localhost\r\nContent-Length: " +
@@ -70,6 +73,9 @@ int main()
 
     assert(exchange(chat_request("session_1")).find("HTTP/1.1 302 Found") == 0);
     assert(exchange(chat_request(session_id)).find("HTTP/1.1 200 OK") == 0);
+    assert(exchange("GET /chat?view=recent HTTP/1.1\r\nHost: localhost\r\n"
+                    "Cookie: session_id=" + session_id + "\r\n\r\n")
+               .find("HTTP/1.1 200 OK") == 0);
 
     const std::string encoded_user = "bob%23%3F%2F%2B%25";
     const std::string other_body = "login=" + encoded_user;

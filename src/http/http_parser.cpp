@@ -122,6 +122,10 @@ std::string get_path(const std::string& request_line)
     if (second_space == std::string::npos)
         return "";
 
+    size_t query_start = request_line.find('?', first_space + 1);
+    if (query_start < second_space)
+        second_space = query_start;
+
     return request_line.substr(first_space + 1, second_space - first_space - 1);
 }
 
