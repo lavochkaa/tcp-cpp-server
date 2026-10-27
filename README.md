@@ -80,7 +80,7 @@ In the terminal, `/chat <username>` opens a private dialog, `/back` leaves it, `
 
 ## How it works
 
-The HTTP listener uses an accept loop. The chat listener uses `epoll` to wait for incoming connections. Both hand accepted sockets to one pool of eight workers; each worker handles its client with blocking I/O. The current `epoll` loop does **not** monitor established chat connections.
+The HTTP listener uses an accept loop. The chat listener uses `epoll` to wait for incoming connections. Each listener has its own pool of eight workers, so idle TCP chat clients cannot consume HTTP workers. Each worker handles its client with blocking I/O. The current `epoll` loop does **not** monitor established chat connections.
 
 Messages and sessions live in process memory, so restarting the server clears them. The browser polls `/chat-data/<username>` every second for new messages.
 
@@ -103,6 +103,13 @@ sh tests/run.sh
 ```
 
 The runnable server uses Linux `epoll`; the tests can also run on macOS because they compile the portable components separately.
+
+To check that idle chat connections do not stall HTTP on Linux, build the server and run:
+
+```sh
+make -C src
+python3 tests/http_under_idle_chat_test.py ./server
+```
 
 ## Security and limits
 

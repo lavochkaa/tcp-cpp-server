@@ -85,11 +85,12 @@ int main()
     std::cout << "Server is listening on port 8080...\n";
     std::cout << "Server is listening on port 8081...\n";
 
-    ThreadPool pool(8);
+    ThreadPool http_pool(8);
+    ThreadPool chat_pool(8);
 
-    std::thread http_thread(run_http_server, http_fd, std::ref(pool));
-    EventLoop chat_loop(chat_fd, [&pool](int client_fd, sockaddr_in client_addr) {
-        pool.submit([client_fd, client_addr] {
+    std::thread http_thread(run_http_server, http_fd, std::ref(http_pool));
+    EventLoop chat_loop(chat_fd, [&chat_pool](int client_fd, sockaddr_in client_addr) {
+        chat_pool.submit([client_fd, client_addr] {
             std::cerr << "New client fd=" << client_fd << "\n";
             handle_client(client_fd, client_addr);
         });
