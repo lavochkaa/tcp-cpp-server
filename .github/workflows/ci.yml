@@ -1,0 +1,17 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Run C++ regression tests
+        run: sh tests/run.sh
+      - name: Build server
+        run: make -C src
+      - name: Keep HTTP responsive with idle chat clients
+        run: python3 tests/http_under_idle_chat_test.py ./server
