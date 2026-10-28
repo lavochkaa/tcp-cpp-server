@@ -94,8 +94,15 @@ void handle_http_client(int client_fd)
         {
             std::string session_id = create_session(login);
             if (session_id.empty())
-                response = make_response("HTTP/1.1 503 Service Unavailable",
-                                         "text/plain", "Session unavailable");
+            {
+                if (is_session_active(login))
+                    response = make_html_response(
+                        make_login_page("<p style=\"color: red;\">User already logged in.</p>")
+                    );
+                else
+                    response = make_response("HTTP/1.1 503 Service Unavailable",
+                                             "text/plain", "Session unavailable");
+            }
             else
             {
                 std::string cookie = "Set-Cookie: session_id=" + session_id +

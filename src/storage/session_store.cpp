@@ -60,6 +60,8 @@ std::string create_session(const std::string& username)
         bool duplicate = false;
         for (const Session& session : sessions)
         {
+            if (session.username == username)
+                return "";
             if (session.session_id == id)
             {
                 duplicate = true;

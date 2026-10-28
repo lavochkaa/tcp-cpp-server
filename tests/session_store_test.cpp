@@ -10,6 +10,8 @@ int main()
     assert(alice_id.size() == 64);
     assert(alice_id.find_first_not_of("0123456789abcdef") == std::string::npos);
     assert(get_username_by_session(alice_id) == "alice");
+    assert(create_session("alice").empty());
+    assert(get_session_usernames().size() == 1);
 
     const std::string bob_id = create_session("bob");
     assert(bob_id.size() == 64);
@@ -19,4 +21,8 @@ int main()
     remove_session(alice_id);
     assert(get_username_by_session(alice_id).empty());
     assert(get_username_by_session(bob_id) == "bob");
+
+    const std::string new_alice_id = create_session("alice");
+    assert(new_alice_id.size() == 64);
+    assert(new_alice_id != alice_id);
 }
