@@ -40,6 +40,13 @@ int main()
     assert(exchange("GET /?source=bookmark HTTP/1.1\r\nHost: localhost\r\n\r\n")
                .find("HTTP/1.1 200 OK") == 0);
 
+    const std::string get_login = exchange(
+        "GET /login HTTP/1.1\r\nHost: localhost\r\nContent-Length: 11\r\n\r\n"
+        "login=alice");
+    assert(get_login.find("HTTP/1.1 405 Method Not Allowed") == 0);
+    assert(get_login.find("Allow: POST\r\n") != std::string::npos);
+    assert(get_login.find("Set-Cookie:") == std::string::npos);
+
     const std::string invalid_body = "login=ali%0D%0Ace";
     const std::string invalid_login = exchange(
         "POST /login HTTP/1.1\r\nHost: localhost\r\nContent-Length: " +

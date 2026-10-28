@@ -62,6 +62,11 @@ void handle_http_client(int client_fd)
     {
         response = load_asset_response("web/assets/js/chat.js", "application/javascript; charset=utf-8");
     }
+    else if (path == "/login" && method != "POST")
+    {
+        response = "HTTP/1.1 405 Method Not Allowed\r\nAllow: POST\r\n"
+                   "Content-Length: 0\r\nConnection: close\r\n\r\n";
+    }
     else if (path == "/login")
     {
         std::string body = get_body(request);
