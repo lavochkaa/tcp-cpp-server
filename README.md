@@ -4,7 +4,7 @@
   <img src="assets/image.png" width="128"/>
 </p>
 
-<p align="center">A small C++17 messenger built with Linux sockets, epoll, and a shared thread pool.</p>
+<p align="center">A small C++17 messenger built with Linux sockets, epoll, and separate HTTP and chat thread pools.</p>
 
 <p align="center">
   <a href="LICENSE">
@@ -85,7 +85,7 @@ The HTTP listener uses an accept loop. The chat listener uses `epoll` to wait fo
 Messages and sessions live in process memory, so restarting the server clears them. The browser polls `/chat-data/<username>` every second for new messages.
 
 ```text
-src/main.cpp          starts both listeners and the shared thread pool
+src/main.cpp          starts both listeners and their separate thread pools
 src/server/           epoll accept loop and thread pool
 src/chat/             TCP commands, client tracking, and authorization
 src/http/             HTTP request handling, responses, and pages
