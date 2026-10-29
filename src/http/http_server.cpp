@@ -95,7 +95,7 @@ void handle_http_client(int client_fd)
             std::string session_id = create_session(login);
             if (session_id.empty())
             {
-                if (is_session_active(login))
+                if (is_user_logged_in_anywhere(login))
                     response = make_html_response(
                         make_login_page("<p style=\"color: red;\">User already logged in.</p>")
                     );

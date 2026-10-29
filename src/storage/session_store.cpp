@@ -1,5 +1,6 @@
 #include "storage/session.hpp"
 #include "storage/session_store.hpp"
+#include "chat/client_manager.hpp"
 
 #include <array>
 #include <cerrno>
@@ -54,6 +55,10 @@ std::string create_session(const std::string& username)
     {
         std::string id = generate_session_id();
         if (id.empty())
+            return "";
+
+        std::lock_guard<std::mutex> claim_lock(username_claim_mutex());
+        if (is_user_online(username))
             return "";
 
         std::lock_guard<std::mutex> lock(sessions_mutex);
