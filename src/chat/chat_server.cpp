@@ -41,8 +41,6 @@ void handle_client(int client_fd, sockaddr_in client_addr)
     Client client;
     client.fd = client_fd;
     client.username = username;
-    add_client(client);
-
     std::cout << client.username << " logged in!\n";
     std::string welcome_msg = "Welcome, " + username + "!\n";
     std::string main_menu = "\nEnter /help for show commands\n";

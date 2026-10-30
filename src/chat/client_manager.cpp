@@ -1,5 +1,6 @@
 #include "chat/client_manager.hpp"
 #include "shared/utils.hpp"
+#include "storage/session_store.hpp"
 
 #include <vector>
 #include <mutex>
@@ -19,10 +20,26 @@ namespace
     std::mutex clients_mutex;
 }
 
-void add_client(const Client& client)
+std::mutex& username_claim_mutex()
 {
+    static std::mutex mutex;
+    return mutex;
+}
+
+bool add_client(const Client& client)
+{
+    std::lock_guard<std::mutex> claim_lock(username_claim_mutex());
+    if (is_session_active(client.username))
+        return false;
+
     std::lock_guard<std::mutex> lock(clients_mutex);
+    for (const ClientEntry& entry : clients)
+    {
+        if (entry.client.username == client.username)
+            return false;
+    }
     clients.push_back({client, std::make_shared<std::mutex>()});
+    return true;
 }
 
 void remove_client(int fd)

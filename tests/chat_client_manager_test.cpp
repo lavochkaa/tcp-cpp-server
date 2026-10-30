@@ -12,7 +12,8 @@ int main()
 {
     int sockets[2];
     assert(socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) == 0);
-    add_client({sockets[0], "alice"});
+    assert(add_client({sockets[0], "alice"}));
+    assert(!add_client({sockets[0], "alice"}));
 
     assert(send_to_user("alice", "hello"));
     char buffer[5];
@@ -37,7 +38,7 @@ int main()
     int send_buffer_size = 1024;
     assert(setsockopt(slow_sockets[0], SOL_SOCKET, SO_SNDBUF,
                       &send_buffer_size, sizeof(send_buffer_size)) == 0);
-    add_client({slow_sockets[0], "slow"});
+    assert(add_client({slow_sockets[0], "slow"}));
 
     auto sender = std::async(std::launch::async, [&] {
         return send_to_user("slow", std::string(4 * 1024 * 1024, 'x'));

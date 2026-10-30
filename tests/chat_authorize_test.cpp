@@ -1,4 +1,6 @@
 #include "chat/authorizate.hpp"
+#include "chat/client_manager.hpp"
+#include "storage/session_store.hpp"
 #include "shared/utils.hpp"
 
 #include <cassert>
@@ -6,9 +8,6 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
-bool is_user_online(const std::string&) { return false; }
-bool is_session_active(const std::string&) { return false; }
 
 int main()
 {
@@ -35,8 +34,35 @@ int main()
     char reply[33];
     assert(recv(connected[1], reply, sizeof(reply), MSG_WAITALL) == static_cast<ssize_t>(sizeof(reply)));
     assert(std::string(reply, sizeof(reply)) == "Login: Authorization successful!\n");
+
+    int duplicate[2];
+    assert(socketpair(AF_UNIX, SOCK_STREAM, 0, duplicate) == 0);
+    assert(send(duplicate[1], login.data(), login.size(), 0) == static_cast<ssize_t>(login.size()));
+    LineReader duplicate_reader(duplicate[0]);
+    std::string duplicate_username;
+    assert(!authorize(duplicate[0], duplicate_username, duplicate_reader));
+    assert(duplicate_username.empty());
+    close(duplicate[0]);
+    close(duplicate[1]);
+
+    remove_client(connected[0]);
     close(connected[0]);
     close(connected[1]);
+
+    const std::string bob_id = create_session("bob");
+    assert(!bob_id.empty());
+    int web_duplicate[2];
+    assert(socketpair(AF_UNIX, SOCK_STREAM, 0, web_duplicate) == 0);
+    const std::string bob_login = "bob\n";
+    assert(send(web_duplicate[1], bob_login.data(), bob_login.size(), 0) ==
+           static_cast<ssize_t>(bob_login.size()));
+    LineReader web_duplicate_reader(web_duplicate[0]);
+    std::string web_duplicate_username;
+    assert(!authorize(web_duplicate[0], web_duplicate_username, web_duplicate_reader));
+    assert(web_duplicate_username.empty());
+    close(web_duplicate[0]);
+    close(web_duplicate[1]);
+    remove_session(bob_id);
 
     int sockets[2];
     assert(socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) == 0);

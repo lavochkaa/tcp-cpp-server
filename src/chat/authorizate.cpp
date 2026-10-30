@@ -1,6 +1,5 @@
 #include "chat/authorizate.hpp"
 #include "chat/client_manager.hpp"
-#include "storage/session_store.hpp"
 #include "shared/utils.hpp"
 
 #include <iostream>
@@ -21,12 +20,18 @@ bool authorize(int client_fd, std::string& username, LineReader& reader)
         return false;
     }
 
-    if (is_user_online(login) || is_session_active(login))
+    if (!add_client({client_fd, login}))
     {
         send_all(client_fd, "User already logged in!\n");
         return false;
     }
 
     username = login;
-    return send_all(client_fd, "Authorization successful!\n");
+    if (!send_all(client_fd, "Authorization successful!\n"))
+    {
+        remove_client(client_fd);
+        username.clear();
+        return false;
+    }
+    return true;
 }
