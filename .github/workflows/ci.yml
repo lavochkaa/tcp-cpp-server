@@ -15,3 +15,5 @@ jobs:
         run: make -C src
       - name: Keep HTTP responsive with idle chat clients
         run: python3 tests/http_under_idle_chat_test.py ./server
+      - name: Keep usernames unique across TCP and HTTP
+        run: python3 tests/cross_interface_login_test.py ./server
